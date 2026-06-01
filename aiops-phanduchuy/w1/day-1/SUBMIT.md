@@ -133,6 +133,14 @@ Threshold: 5.0 | Precision: 0.0625 | Recall: 0.0033 | F1 Score: 0.0063
 - Development choice: Em ưu tiên đưa Isolation Forest (contamination = 0.01) để đo đúng chính xác khi nào hệ thống dừng lại
 - Production choice: Em ưu tiên đưa Isolation Forest (contamination = 0.05) vào vận hành thực tế để đảm bảo an toàn tối đa cho hệ thống (đạt độ nhạy cao), chấp nhận một vài cảnh báo giả. 
 
+## Knowledge check 
+<img width="2554" height="2174" alt="image" src="https://github.com/user-attachments/assets/eebfceb5-34ba-4f91-9129-77f072b4cd9f" />
+<img width="2309" height="3871" alt="image" src="https://github.com/user-attachments/assets/6ced6800-2ec3-422f-b3d4-bfbeee2cb8f5" />
+<img width="2382" height="2931" alt="image" src="https://github.com/user-attachments/assets/3491b9ce-4276-4993-b211-5b8073d4fa0b" />
+<img width="1793" height="2156" alt="image" src="https://github.com/user-attachments/assets/20a25e06-563a-4ff3-aff0-9ad9b2121395" />
+<img width="2274" height="2775" alt="image" src="https://github.com/user-attachments/assets/24efca2c-9e9f-4877-93d5-e2382d667aba" />
+
+
 
 
 
