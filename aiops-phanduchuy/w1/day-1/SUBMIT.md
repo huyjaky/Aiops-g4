@@ -115,8 +115,17 @@ Threshold: 5.0 | Precision: 0.0625 | Recall: 0.0033 | F1 Score: 0.0063
 </table>
 </div>
 
+## kết luận
 
+| **No** | **Dataset**                              | **Stationarity** | **Seasonality** | **Skewness**                             
+| ------ | ---------------------------------------- | ---------------- | --------------- | ---------------------------------------- 
+| **1**  | **ambient_temperature_system_failure**   | Yes              | Yes             | Slightly left-skewed - Close to Gaussian | 
 
+- Dữ liệu: Em xác định đây là chuỗi thời gian đơn biến về nhiệt độ, có tính dừng và chu kỳ 24h rõ rệt.
+- Phương pháp: Em chọn STL + 3σ để phân tách chu kỳ đơn biến và Isolation Forest để học các đặc trưng đa chiều.
+- Kết quả: Em đánh giá Isolation Forest tốt hơn nhờ F1-score (0.2884) và Recall (23.03%) vượt trội so với STL.
+- Trade-off: Em nhận thấy khi tăng contamination để tăng Recall (giảm sót lỗi) thì Precision sẽ bị giảm (tăng cảnh báo giả).
+- Production choice: Em ưu tiên đưa Isolation Forest (contamination = 0.05) vào vận hành thực tế để đảm bảo an toàn tối đa cho hệ thống (đạt độ nhạy cao), chấp nhận một vài cảnh báo giả.
 
 
 
