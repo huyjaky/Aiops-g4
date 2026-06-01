@@ -1,4 +1,9 @@
 ## plot kết quả anomaly detection (2 detector)
+
+## Nếu ưu tiên độ an toàn và hi sinh độ chính xác 
+<img width="1587" height="1187" alt="image" src="https://github.com/user-attachments/assets/52d0f4cf-d31c-4883-8345-5844b2cacd24" />
+
+## Nếu ưu tiên độ chính xác trong dự đoán 
 <img width="1587" height="1187" alt="image" src="https://github.com/user-attachments/assets/0e293e0b-1586-49db-b8d7-edc9277c603b" />
 
 ## bảng so sánh precision/recall
@@ -125,7 +130,8 @@ Threshold: 5.0 | Precision: 0.0625 | Recall: 0.0033 | F1 Score: 0.0063
 - Phương pháp: Em chọn STL + 3σ để phân tách chu kỳ đơn biến và Isolation Forest để học các đặc trưng đa chiều.
 - Kết quả: Em đánh giá Isolation Forest tốt hơn nhờ F1-score (0.2884) và Recall (23.03%) vượt trội so với STL.
 - Trade-off: Em nhận thấy khi tăng contamination để tăng Recall (giảm sót lỗi) thì Precision sẽ bị giảm (tăng cảnh báo giả).
-- Production choice: Em ưu tiên đưa Isolation Forest (contamination = 0.05) vào vận hành thực tế để đảm bảo an toàn tối đa cho hệ thống (đạt độ nhạy cao), chấp nhận một vài cảnh báo giả.
+- Development choice: Em ưu tiên đưa Isolation Forest (contamination = 0.01) để đo đúng chính xác khi nào hệ thống dừng lại
+- Production choice: Em ưu tiên đưa Isolation Forest (contamination = 0.05) vào vận hành thực tế để đảm bảo an toàn tối đa cho hệ thống (đạt độ nhạy cao), chấp nhận một vài cảnh báo giả. 
 
 
 
