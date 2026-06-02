@@ -93,3 +93,74 @@ Cluster 9:
   - instruction address: <*>
   ... (total 21 templates)
 ```
+
+### SCRIPT 
+```
+py log_analyzer.py BGL/BGL_2k.log
+=== Log Analyzer ===
+File: BGL/BGL_2k.log | Type: BGL
+Mining templates...
+\n[1] General Statistics:
+Total lines: 2000
+Unique templates: 105
+\n[2] Top-5 Templates:
+  - [720 times | 36.0%] generating <*>
+  - [207 times | 10.3%] iar <*> dear <*>
+  - [108 times | 5.4%] <*> double-hummer alignment exceptions
+  - [91 times | 4.5%] CE sym <*> at <*> mask <*>
+  - [84 times | 4.2%] <*> floating point alignment exceptions
+\n[3] Anomaly Detection (Last 1 hour):
+  Time frame evaluated (Last hour): 2006-01-03 22:00:00
+  * Spiked templates (> Mean + 3 Std):
+    - ciod: generated <*> core files for program <*> (Count: 1, Avg: 0.1)
+  * New Templates (Never seen before):
+    None.
+```
+
+```
+py log_analyzer.py HDFS/HDFS_2k.log
+=== Log Analyzer ===
+File: HDFS/HDFS_2k.log | Type: HDFS
+Mining templates...
+\n[1] General Statistics:
+Total lines: 2000
+Unique templates: 17
+\n[2] Top-5 Templates:
+  - [310 times | 15.5%] PacketResponder <*> for block <*> terminating
+  - [300 times | 15.0%] BLOCK* NameSystem.addStoredBlock: blockMap updated: <*> is added to <*> size <*>
+  - [291 times | 14.5%] Receiving block <*> src: <*> dest: <*>
+  - [280 times | 14.0%] Received block <*> of size <*> from <*>
+  - [262 times | 13.1%] Deleting block <*> file <*>
+\n[3] Anomaly Detection (Last 1 hour):
+  Time frame evaluated (Last hour): 2008-11-11 10:00:00
+  * Spiked templates (> Mean + 3 Std):
+    None.
+  * New Templates (Never seen before):
+    None.
+```
+
+## BONUS
+### Parse log từ 1 ứng dụng thật mà bạn có (Docker log, nginx log, application log) — không dùng Loghub
+```
+py portainer_parser.py
+Mining templates for Portainer logs...
+\n--- LOG PARSING RESULTS ---
+Total templates found: 16
+\nTemplate List:
+[27 times] failure to close resource | <*>
+[23 times] session ended |
+[10 times] starting <*> server | <*>
+[ 5 times] Listening on http://0.0.0.0:8000
+[ 5 times] executing post init migration for environment | <*>
+[ 5 times] starting Portainer | <*> <*> <*> <*> <*> <*> webpack_<*>
+[ 4 times] encryption key file not present | filename=/run/secrets/portainer
+[ 4 times] proceeding without encryption key |
+[ 4 times] loading PortainerDB | filename=portainer.db
+[ 4 times] found Chisel private key file on disk | private-key=/data/chisel/private-key.pem
+[ 4 times] Reverse tunnelling enabled
+[ 1 times] <*>
+[ 1 times] <*>
+[ 1 times] <*>
+[ 1 times] <*>
+[ 1 times] <*>
+```
