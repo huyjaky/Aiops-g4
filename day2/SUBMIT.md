@@ -139,6 +139,18 @@ Unique templates: 17
     None.
 ```
 
+## Drain3 parse tốt không, template nào cho insight, metric vs log khác gì
+### rain3 parse có tốt không? 
+-> Rất tốt và nhanh, nhưng phụ thuộc hoàn toàn vào Masking Rules với những log có service dày đặt. Nhờ việc tạo ra Rule chuẩn em đã dễ dàng tạo ra các template chuẩn xác. Nếu không có rule, nó sẽ sinh ra vô số template rác.
+### 2. Template mới hoàn toàn, Template tăng đột biến
+- Template mới hoàn toàn: Giúp phát hiện ngay những mẫu log chưa từng xuất hiện trước đây, giúp nhận diện sớm các lỗi bất thường, lỗ hổng zero-day hoặc hành vi tấn công mới của hacker. 
+- Template tăng đột biến: Theo dõi sự thay đổi tần suất xuất hiện của các mẫu log theo thời gian để cảnh báo sớm các sự cố tiềm ẩn. Chẳng hạn, trong Phase 4, hệ thống đã phát hiện template "dump core" tăng mạnh vào giờ cuối cùng, cho thấy nguy cơ hệ thống gặp lỗi nghiêm trọng hoặc sắp xảy ra sự cố.
+### 3. Metric vs Log khác gì và kết hợp được gì?
+- Metric: Là những con số đếm. Nó nhẹ, load nhanh, đóng vai trò làm chuông báo động đỏ.
+- Log: Là câu chữ chi tiết. Nó nặng, khó đọc, đóng vai trò làm camera an ninh để tìm kím nguyên nhân gốc rễ.
+- Khi kết hợp: Metric giúp em biết chính xác phút nào hệ thống có vấn đề, sau đó em map sang Log để xem nguyên nhân là template lỗi nào. Điều này giúp tự động hóa quá trình debug thay vì phải đọc thủ công từng dòng.
+
+
 ## BONUS
 ### Parse log từ 1 ứng dụng thật mà bạn có (Docker log, nginx log, application log) — không dùng Loghub
 ```
@@ -164,3 +176,13 @@ Total templates found: 16
 [ 1 times] <*>
 [ 1 times] <*>
 ```
+## Knowledge check 
+<img width="2268" height="4388" alt="image" src="https://github.com/user-attachments/assets/c499dae3-498f-434e-8e6c-08baffa68c1c" />
+<img width="2802" height="4538" alt="image" src="https://github.com/user-attachments/assets/f2c7c267-2ddc-4223-a701-4910d65fbe9d" />
+<img width="2204" height="1393" alt="image" src="https://github.com/user-attachments/assets/af57785a-2b41-48a0-ba05-9341aa5760b7" />
+<img width="1440" height="1303" alt="image" src="https://github.com/user-attachments/assets/cc8fe782-f7f3-487f-9ad5-105896757108" />
+<img width="1593" height="1812" alt="image" src="https://github.com/user-attachments/assets/4e2c1cee-c008-4608-933d-4405b8e14a05" />
+
+
+
+
