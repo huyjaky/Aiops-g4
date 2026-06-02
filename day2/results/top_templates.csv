@@ -1,0 +1,11 @@
+template_id,template,count
+7,generating core.<*>,721
+174,<*> floating point alignment exceptions,121
+5,"CE sym <*>, at <*>, mask <*>",92
+453,"<*> total interrupts. <*> critical input interrupts. <*> microseconds total spent on critical input interrupts, <*> microseconds max time in a critical input interrupt.",71
+12,data TLB error interrupt,60
+452,<*> microseconds spent in the rbs signal handler during <*> calls. <*> microseconds was the maximum time for a single instance of a correctable ddr.,51
+1,instruction cache parity error corrected,42
+179,"idoproxydb hit ASSERT condition: ASSERT expression=<*> Source file=idotransportmgr.cpp Source line=<*> Function=int IdoTransportMgr::SendPacket(IdoUdpMgr*, BglCtlPavTrace*)",35
+14,data storage interrupt,30
+189,ciod: generated <*> core files for program <*>,30

@@ -1,0 +1,100 @@
+2026/05/26 17:15:35 server: Fingerprint HD61eKm0xU1mIZtV0C17RMH59HbjrDqupMTr37kGaPg=
+2026/05/26 17:15:35 server: Listening on http://0.0.0.0:8000
+2026/05/26 05:15PM INF github.com/portainer/portainer/api/datastore/postinit/migrate_post_init.go:141 > executing post init migration for environment | endpoint_id=3
+2026/05/26 05:15PM INF github.com/portainer/portainer/api/cmd/portainer/main.go:639 > starting Portainer | build_number=16 go_version=go1.26.1 image_tag=2.40.0-linux-amd64 nodejs_version=v22.22.1 pnpm_version=10.27.0 version=2.40.0 webpack_version=5.105.0
+2026/05/26 05:15PM INF github.com/portainer/portainer/api/http/server.go:367 > starting HTTPS server | bind_address=:9443
+2026/05/26 05:15PM INF github.com/portainer/portainer/api/http/server.go:351 > starting HTTP server | bind_address=:9000
+2026/05/28 01:13PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 01:13PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 01:53PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 01:53PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 01:53PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 01:53PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 01:54PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 01:54PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 01:57PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 01:57PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:06PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:06PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="tls: failed to send closeNotify alert (but connection was closed anyway): write tcp 172.17.0.3:9443->172.17.0.1:57506: write: broken pipe"
+2026/05/28 02:06PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:22PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:22PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:22PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:23PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:25PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:26PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:30PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:30PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:30PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:31PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:31PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:31PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:31PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:32PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:38PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:38PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:38PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:39PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:40PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:41PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 02:42PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 02:42PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="tls: failed to send closeNotify alert (but connection was closed anyway): write tcp 172.17.0.3:9443->172.17.0.1:43882: write: broken pipe"
+2026/05/28 02:43PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 03:23PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 03:24PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 03:24PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 03:24PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 03:28PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 03:28PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="tls: failed to send closeNotify alert (but connection was closed anyway): write tcp 172.17.0.3:9443->172.17.0.1:60892: write: broken pipe"
+2026/05/28 03:28PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 03:42PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 03:42PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 03:58PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 03:58PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/28 04:25PM INF github.com/portainer/portainer/api/ws/hijack.go:55 > session ended |
+2026/05/28 04:25PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="tls: failed to send closeNotify alert (but connection was closed anyway): write tcp 172.17.0.3:9443->172.17.0.1:49266: write: broken pipe"
+2026/05/28 04:25PM ERR github.com/portainer/portainer/api/logs/log.go:68 > failure to close resource | error="use of closed network connection"
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:326 > encryption key file not present | filename=/run/secrets/portainer
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:366 > proceeding without encryption key |
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/database/boltdb/db.go:137 > loading PortainerDB | filename=portainer.db
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/chisel/service.go:198 > found Chisel private key file on disk | private-key=/data/chisel/private-key.pem
+2026/05/30 10:00:28 server: Reverse tunnelling enabled
+2026/05/30 10:00:28 server: Fingerprint HD61eKm0xU1mIZtV0C17RMH59HbjrDqupMTr37kGaPg=
+2026/05/30 10:00:28 server: Listening on http://0.0.0.0:8000
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/datastore/postinit/migrate_post_init.go:141 > executing post init migration for environment | endpoint_id=3
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:639 > starting Portainer | build_number=16 go_version=go1.26.1 image_tag=2.40.0-linux-amd64 nodejs_version=v22.22.1 pnpm_version=10.27.0 version=2.40.0 webpack_version=5.105.0
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/http/server.go:367 > starting HTTPS server | bind_address=:9443
+2026/05/30 10:00AM INF github.com/portainer/portainer/api/http/server.go:351 > starting HTTP server | bind_address=:9000
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/cmd/portainer/main.go:326 > encryption key file not present | filename=/run/secrets/portainer
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/cmd/portainer/main.go:366 > proceeding without encryption key |
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/database/boltdb/db.go:137 > loading PortainerDB | filename=portainer.db
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/chisel/service.go:198 > found Chisel private key file on disk | private-key=/data/chisel/private-key.pem
+2026/05/30 13:16:55 server: Reverse tunnelling enabled
+2026/05/30 13:16:55 server: Fingerprint HD61eKm0xU1mIZtV0C17RMH59HbjrDqupMTr37kGaPg=
+2026/05/30 13:16:55 server: Listening on http://0.0.0.0:8000
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/datastore/postinit/migrate_post_init.go:141 > executing post init migration for environment | endpoint_id=3
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/cmd/portainer/main.go:639 > starting Portainer | build_number=16 go_version=go1.26.1 image_tag=2.40.0-linux-amd64 nodejs_version=v22.22.1 pnpm_version=10.27.0 version=2.40.0 webpack_version=5.105.0
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/http/server.go:367 > starting HTTPS server | bind_address=:9443
+2026/05/30 01:16PM INF github.com/portainer/portainer/api/http/server.go:351 > starting HTTP server | bind_address=:9000
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:326 > encryption key file not present | filename=/run/secrets/portainer
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:366 > proceeding without encryption key |
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/database/boltdb/db.go:137 > loading PortainerDB | filename=portainer.db
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/chisel/service.go:198 > found Chisel private key file on disk | private-key=/data/chisel/private-key.pem
+2026/05/31 09:03:58 server: Reverse tunnelling enabled
+2026/05/31 09:03:58 server: Fingerprint HD61eKm0xU1mIZtV0C17RMH59HbjrDqupMTr37kGaPg=
+2026/05/31 09:03:58 server: Listening on http://0.0.0.0:8000
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/datastore/postinit/migrate_post_init.go:141 > executing post init migration for environment | endpoint_id=3
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:639 > starting Portainer | build_number=16 go_version=go1.26.1 image_tag=2.40.0-linux-amd64 nodejs_version=v22.22.1 pnpm_version=10.27.0 version=2.40.0 webpack_version=5.105.0
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/http/server.go:367 > starting HTTPS server | bind_address=:9443
+2026/05/31 09:03AM INF github.com/portainer/portainer/api/http/server.go:351 > starting HTTP server | bind_address=:9000
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:326 > encryption key file not present | filename=/run/secrets/portainer
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:366 > proceeding without encryption key |
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/database/boltdb/db.go:137 > loading PortainerDB | filename=portainer.db
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/chisel/service.go:198 > found Chisel private key file on disk | private-key=/data/chisel/private-key.pem
+2026/06/02 07:45:35 server: Reverse tunnelling enabled
+2026/06/02 07:45:35 server: Fingerprint HD61eKm0xU1mIZtV0C17RMH59HbjrDqupMTr37kGaPg=
+2026/06/02 07:45:35 server: Listening on http://0.0.0.0:8000
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/datastore/postinit/migrate_post_init.go:141 > executing post init migration for environment | endpoint_id=3
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/cmd/portainer/main.go:639 > starting Portainer | build_number=16 go_version=go1.26.1 image_tag=2.40.0-linux-amd64 nodejs_version=v22.22.1 pnpm_version=10.27.0 version=2.40.0 webpack_version=5.105.0
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/http/server.go:367 > starting HTTPS server | bind_address=:9443
+2026/06/02 07:45AM INF github.com/portainer/portainer/api/http/server.go:351 > starting HTTP server | bind_address=:9000
