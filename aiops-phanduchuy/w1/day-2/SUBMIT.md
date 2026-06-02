@@ -176,6 +176,40 @@ Total templates found: 16
 [ 1 times] <*>
 [ 1 times] <*>
 ```
+### So sánh Drain3 output khi dùng structured JSON log vs unstructured plain text log trên cùng 1 service
+```
+\n=== Drain3 on Unstructured Plain Text (No Masking Rules) ===
+Total templates generated: 5
+Top 5 templates:
+  [214 times] Failed login attempt for user <*> from <*>
+  [214 times] Database connection timeout while processing <*> for <*>
+  [203 times] Request received for path <*> from <*>
+  [186 times] User <*> logged out successfully
+  [183 times] User <*> logged in from <*>
+\n=== Drain3 on Structured JSON (Extracting 'message' field) ===
+Total templates generated: 4
+Top 5 templates:
+  [369 times] User logged <*> <*>
+  [214 times] Failed login attempt for user from
+  [214 times] Database connection timeout while processing for
+  [203 times] Request received for path from
+```
+kết luận: Không áp dụng các quy tắc masking, dữ liệu Plain Text tạo ra 5 template (hiện tượng template explosion – số lượng template bị phân mảnh và tăng lên không cần thiết), trong khi dữ liệu Structured JSON chỉ tạo ra đúng 4 template (phân cụm hoàn hảo).
+
+### Viết regex parser cho 1 log format cụ thể, so sánh output với Drain3
+```
+Analyzing 1000 log lines...
+\n=== Custom Regex Parser ===
+Time taken: 0.0013s
+Templates found: 5
+Unmatched lines: 68
+\n=== Drain3 Parser ===
+Time taken: 0.0039s
+Templates found: 5
+Unmatched lines: 0 (Drain3 always clusters)
+```
+kết luận: Regex rất nhanh và chính xác khi tất cả mẫu log đều đã biết trước. Tuy nhiên, nó sẽ thất bại khi xuất hiện định dạng log mới. Trong khi đó, Drain3 chậm hơn nhưng có khả năng tự động phát hiện và học các mẫu log mới, giúp hệ thống linh hoạt hơn trước những thay đổi trong thực tế.
+
 ## Knowledge check 
 <img width="2268" height="4388" alt="image" src="https://github.com/user-attachments/assets/c499dae3-498f-434e-8e6c-08baffa68c1c" />
 <img width="2802" height="4538" alt="image" src="https://github.com/user-attachments/assets/f2c7c267-2ddc-4223-a701-4910d65fbe9d" />
