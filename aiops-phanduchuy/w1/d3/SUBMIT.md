@@ -53,6 +53,26 @@ Building in-house saves $728,620.42 per month.
 ============================================================
 ```
 
+## Evidence chạy `uv run pipeline.py`
+```
+uv run pipeline.py
+Dataset verified at: ./realKnownCause/machine_temperature_system_failure.csv
+Producer: Initializing...
+Consumer: Initializing...
+Producer: Loaded 22695 rows. Starting to push data to queue...
+Consumer: Processed 3000 records... (Latest: Time: 2013-12-13 07:10:00 | Value: 93.54538147 | Mean: 94.46 | Std: 0.84)
+Consumer: Processed 6000 records... (Latest: Time: 2013-12-23 17:10:00 | Value: 84.85298264 | Mean: 83.82 | Std: 0.84)
+Consumer: Processed 9000 records... (Latest: Time: 2014-01-03 03:10:00 | Value: 86.25383374 | Mean: 86.95 | Std: 0.59)
+Consumer: Processed 12000 records... (Latest: Time: 2014-01-13 12:10:00 | Value: 75.32989599999998 | Mean: 77.63 | Std: 2.03)
+Consumer: Processed 15000 records... (Latest: Time: 2014-01-23 22:10:00 | Value: 91.67828361 | Mean: 91.85 | Std: 0.85)
+Consumer: Processed 18000 records... (Latest: Time: 2014-02-03 08:10:00 | Value: 50.81262286 | Mean: 51.23 | Std: 1.04)
+Consumer: Processed 21000 records... (Latest: Time: 2014-02-13 18:10:00 | Value: 94.68288257 | Mean: 97.05 | Std: 1.41)
+Producer: Finished pushing all data.
+Consumer: Completed processing. Total records: 22695
+Consumer: Features successfully saved to: features.parquet
+Pipeline completed in 3.51 seconds.
+```
+
 ## **Tóm tắt** ADR decision (đọc kĩ hơn trong file ADR-001.md)
 Hệ thống Payment Microservices cần xử lý khối lượng telemetry rất lớn, khoảng 6 TB log mỗi ngày và 10 triệu sự kiện mỗi giây. Nếu OpenTelemetry Collector ghi trực tiếp dữ liệu vào Elasticsearch và VictoriaMetrics, các hệ thống lưu trữ có thể bị quá tải trong những thời điểm traffic tăng đột biến, dẫn đến backpressure, tăng độ trễ và nguy cơ mất dữ liệu.
 Để giải quyết vấn đề này, em quyết định sử dụng Apache Kafka làm lớp trung gian. OTel Collector sẽ gửi toàn bộ metrics, logs và traces vào Kafka, sau đó Apache Flink và các Ingestion Worker sẽ đọc dữ liệu từ Kafka để xử lý và ghi xuống các hệ thống lưu trữ.
