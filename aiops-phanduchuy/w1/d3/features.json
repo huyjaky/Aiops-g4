@@ -1,0 +1,902 @@
+[
+    {
+        "timestamp": "2026-06-03T09:08:57.585418",
+        "metric_value": 98.2543,
+        "rolling_mean_5s": 98.2543,
+        "rate_of_change": 0.0
+    },
+    {
+        "timestamp": "2026-06-03T09:08:58.585418",
+        "metric_value": 99.2195,
+        "rolling_mean_5s": 98.7369,
+        "rate_of_change": 0.009823
+    },
+    {
+        "timestamp": "2026-06-03T09:08:59.585418",
+        "metric_value": 100.5525,
+        "rolling_mean_5s": 99.3421,
+        "rate_of_change": 0.013435
+    },
+    {
+        "timestamp": "2026-06-03T09:09:00.585418",
+        "metric_value": 102.4133,
+        "rolling_mean_5s": 100.1099,
+        "rate_of_change": 0.018506
+    },
+    {
+        "timestamp": "2026-06-03T09:09:01.585418",
+        "metric_value": 101.642,
+        "rolling_mean_5s": 100.4163,
+        "rate_of_change": -0.007531
+    },
+    {
+        "timestamp": "2026-06-03T09:09:02.585418",
+        "metric_value": 100.7071,
+        "rolling_mean_5s": 100.9069,
+        "rate_of_change": -0.009198
+    },
+    {
+        "timestamp": "2026-06-03T09:09:03.585418",
+        "metric_value": 99.6226,
+        "rolling_mean_5s": 100.9875,
+        "rate_of_change": -0.010769
+    },
+    {
+        "timestamp": "2026-06-03T09:09:04.585418",
+        "metric_value": 99.0064,
+        "rolling_mean_5s": 100.6783,
+        "rate_of_change": -0.006185
+    },
+    {
+        "timestamp": "2026-06-03T09:09:05.585418",
+        "metric_value": 100.4258,
+        "rolling_mean_5s": 100.2808,
+        "rate_of_change": 0.014336
+    },
+    {
+        "timestamp": "2026-06-03T09:09:06.585418",
+        "metric_value": 101.639,
+        "rolling_mean_5s": 100.2802,
+        "rate_of_change": 0.012081
+    },
+    {
+        "timestamp": "2026-06-03T09:09:07.585418",
+        "metric_value": 102.4209,
+        "rolling_mean_5s": 100.6229,
+        "rate_of_change": 0.007693
+    },
+    {
+        "timestamp": "2026-06-03T09:09:08.585418",
+        "metric_value": 104.2888,
+        "rolling_mean_5s": 101.5562,
+        "rate_of_change": 0.018237
+    },
+    {
+        "timestamp": "2026-06-03T09:09:09.585418",
+        "metric_value": 104.2881,
+        "rolling_mean_5s": 102.6125,
+        "rate_of_change": -7e-06
+    },
+    {
+        "timestamp": "2026-06-03T09:09:10.585418",
+        "metric_value": 104.4826,
+        "rolling_mean_5s": 103.4239,
+        "rate_of_change": 0.001865
+    },
+    {
+        "timestamp": "2026-06-03T09:09:11.585418",
+        "metric_value": 105.707,
+        "rolling_mean_5s": 104.2375,
+        "rate_of_change": 0.011719
+    },
+    {
+        "timestamp": "2026-06-03T09:09:12.585418",
+        "metric_value": 106.3913,
+        "rolling_mean_5s": 105.0316,
+        "rate_of_change": 0.006474
+    },
+    {
+        "timestamp": "2026-06-03T09:09:13.585418",
+        "metric_value": 105.8228,
+        "rolling_mean_5s": 105.3384,
+        "rate_of_change": -0.005343
+    },
+    {
+        "timestamp": "2026-06-03T09:09:14.585418",
+        "metric_value": 106.0564,
+        "rolling_mean_5s": 105.692,
+        "rate_of_change": 0.002207
+    },
+    {
+        "timestamp": "2026-06-03T09:09:15.585418",
+        "metric_value": 105.6747,
+        "rolling_mean_5s": 105.9304,
+        "rate_of_change": -0.003599
+    },
+    {
+        "timestamp": "2026-06-03T09:09:16.585418",
+        "metric_value": 104.6491,
+        "rolling_mean_5s": 105.7189,
+        "rate_of_change": -0.009705
+    },
+    {
+        "timestamp": "2026-06-03T09:09:17.585418",
+        "metric_value": 103.8841,
+        "rolling_mean_5s": 105.2174,
+        "rate_of_change": -0.00731
+    },
+    {
+        "timestamp": "2026-06-03T09:09:18.585418",
+        "metric_value": 103.5897,
+        "rolling_mean_5s": 104.7708,
+        "rate_of_change": -0.002834
+    },
+    {
+        "timestamp": "2026-06-03T09:09:19.585418",
+        "metric_value": 102.393,
+        "rolling_mean_5s": 104.0381,
+        "rate_of_change": -0.011552
+    },
+    {
+        "timestamp": "2026-06-03T09:09:20.585418",
+        "metric_value": 103.3738,
+        "rolling_mean_5s": 103.5779,
+        "rate_of_change": 0.009579
+    },
+    {
+        "timestamp": "2026-06-03T09:09:21.585418",
+        "metric_value": 104.3071,
+        "rolling_mean_5s": 103.5095,
+        "rate_of_change": 0.009028
+    },
+    {
+        "timestamp": "2026-06-03T09:09:22.585418",
+        "metric_value": 104.9524,
+        "rolling_mean_5s": 103.7232,
+        "rate_of_change": 0.006187
+    },
+    {
+        "timestamp": "2026-06-03T09:09:23.585418",
+        "metric_value": 106.8103,
+        "rolling_mean_5s": 104.3673,
+        "rate_of_change": 0.017702
+    },
+    {
+        "timestamp": "2026-06-03T09:09:24.585418",
+        "metric_value": 108.3346,
+        "rolling_mean_5s": 105.5556,
+        "rate_of_change": 0.014271
+    },
+    {
+        "timestamp": "2026-06-03T09:09:25.585418",
+        "metric_value": 108.9403,
+        "rolling_mean_5s": 106.6689,
+        "rate_of_change": 0.005591
+    },
+    {
+        "timestamp": "2026-06-03T09:09:26.585418",
+        "metric_value": 107.0956,
+        "rolling_mean_5s": 107.2266,
+        "rate_of_change": -0.016933
+    },
+    {
+        "timestamp": "2026-06-03T09:09:27.585418",
+        "metric_value": 106.279,
+        "rolling_mean_5s": 107.492,
+        "rate_of_change": -0.007625
+    },
+    {
+        "timestamp": "2026-06-03T09:09:28.585418",
+        "metric_value": 106.243,
+        "rolling_mean_5s": 107.3785,
+        "rate_of_change": -0.000339
+    },
+    {
+        "timestamp": "2026-06-03T09:09:29.585418",
+        "metric_value": 104.3392,
+        "rolling_mean_5s": 106.5794,
+        "rate_of_change": -0.017919
+    },
+    {
+        "timestamp": "2026-06-03T09:09:30.585418",
+        "metric_value": 106.2413,
+        "rolling_mean_5s": 106.0396,
+        "rate_of_change": 0.01823
+    },
+    {
+        "timestamp": "2026-06-03T09:09:31.585418",
+        "metric_value": 104.3745,
+        "rolling_mean_5s": 105.4954,
+        "rate_of_change": -0.017571
+    },
+    {
+        "timestamp": "2026-06-03T09:09:32.585418",
+        "metric_value": 104.3156,
+        "rolling_mean_5s": 105.1027,
+        "rate_of_change": -0.000564
+    },
+    {
+        "timestamp": "2026-06-03T09:09:33.585418",
+        "metric_value": 102.4165,
+        "rolling_mean_5s": 104.3374,
+        "rate_of_change": -0.018205
+    },
+    {
+        "timestamp": "2026-06-03T09:09:34.585418",
+        "metric_value": 104.3339,
+        "rolling_mean_5s": 104.3364,
+        "rate_of_change": 0.018722
+    },
+    {
+        "timestamp": "2026-06-03T09:09:35.585418",
+        "metric_value": 103.1969,
+        "rolling_mean_5s": 103.7275,
+        "rate_of_change": -0.010898
+    },
+    {
+        "timestamp": "2026-06-03T09:09:36.585418",
+        "metric_value": 104.7791,
+        "rolling_mean_5s": 103.8084,
+        "rate_of_change": 0.015332
+    },
+    {
+        "timestamp": "2026-06-03T09:09:37.585418",
+        "metric_value": 105.5878,
+        "rolling_mean_5s": 104.0628,
+        "rate_of_change": 0.007718
+    },
+    {
+        "timestamp": "2026-06-03T09:09:38.585418",
+        "metric_value": 104.9419,
+        "rolling_mean_5s": 104.5679,
+        "rate_of_change": -0.006117
+    },
+    {
+        "timestamp": "2026-06-03T09:09:39.585418",
+        "metric_value": 104.5635,
+        "rolling_mean_5s": 104.6138,
+        "rate_of_change": -0.003606
+    },
+    {
+        "timestamp": "2026-06-03T09:09:40.585418",
+        "metric_value": 104.6513,
+        "rolling_mean_5s": 104.9047,
+        "rate_of_change": 0.00084
+    },
+    {
+        "timestamp": "2026-06-03T09:09:41.585418",
+        "metric_value": 103.004,
+        "rolling_mean_5s": 104.5497,
+        "rate_of_change": -0.015741
+    },
+    {
+        "timestamp": "2026-06-03T09:09:42.585418",
+        "metric_value": 103.3513,
+        "rolling_mean_5s": 104.1024,
+        "rate_of_change": 0.003372
+    },
+    {
+        "timestamp": "2026-06-03T09:09:43.585418",
+        "metric_value": 103.9268,
+        "rolling_mean_5s": 103.8994,
+        "rate_of_change": 0.005568
+    },
+    {
+        "timestamp": "2026-06-03T09:09:44.585418",
+        "metric_value": 105.1619,
+        "rolling_mean_5s": 104.0191,
+        "rate_of_change": 0.011884
+    },
+    {
+        "timestamp": "2026-06-03T09:09:45.585418",
+        "metric_value": 106.086,
+        "rolling_mean_5s": 104.306,
+        "rate_of_change": 0.008787
+    },
+    {
+        "timestamp": "2026-06-03T09:09:46.585418",
+        "metric_value": 105.1487,
+        "rolling_mean_5s": 104.7349,
+        "rate_of_change": -0.008835
+    },
+    {
+        "timestamp": "2026-06-03T09:09:47.585418",
+        "metric_value": 105.647,
+        "rolling_mean_5s": 105.1941,
+        "rate_of_change": 0.004739
+    },
+    {
+        "timestamp": "2026-06-03T09:09:48.585418",
+        "metric_value": 105.2348,
+        "rolling_mean_5s": 105.4557,
+        "rate_of_change": -0.003902
+    },
+    {
+        "timestamp": "2026-06-03T09:09:49.585418",
+        "metric_value": 106.6823,
+        "rolling_mean_5s": 105.7598,
+        "rate_of_change": 0.013755
+    },
+    {
+        "timestamp": "2026-06-03T09:09:50.585418",
+        "metric_value": 106.6338,
+        "rolling_mean_5s": 105.8693,
+        "rate_of_change": -0.000455
+    },
+    {
+        "timestamp": "2026-06-03T09:09:51.585418",
+        "metric_value": 107.9084,
+        "rolling_mean_5s": 106.4213,
+        "rate_of_change": 0.011953
+    },
+    {
+        "timestamp": "2026-06-03T09:09:52.585418",
+        "metric_value": 106.1529,
+        "rolling_mean_5s": 106.5224,
+        "rate_of_change": -0.016268
+    },
+    {
+        "timestamp": "2026-06-03T09:09:53.585418",
+        "metric_value": 105.1465,
+        "rolling_mean_5s": 106.5048,
+        "rate_of_change": -0.009481
+    },
+    {
+        "timestamp": "2026-06-03T09:09:54.585418",
+        "metric_value": 104.8716,
+        "rolling_mean_5s": 106.1426,
+        "rate_of_change": -0.002614
+    },
+    {
+        "timestamp": "2026-06-03T09:09:55.585418",
+        "metric_value": 105.2449,
+        "rolling_mean_5s": 105.8649,
+        "rate_of_change": 0.00356
+    },
+    {
+        "timestamp": "2026-06-03T09:09:56.585418",
+        "metric_value": 105.4247,
+        "rolling_mean_5s": 105.3681,
+        "rate_of_change": 0.001708
+    },
+    {
+        "timestamp": "2026-06-03T09:09:57.585418",
+        "metric_value": 105.5543,
+        "rolling_mean_5s": 105.2484,
+        "rate_of_change": 0.001229
+    },
+    {
+        "timestamp": "2026-06-03T09:09:58.585418",
+        "metric_value": 107.3156,
+        "rolling_mean_5s": 105.6822,
+        "rate_of_change": 0.016686
+    },
+    {
+        "timestamp": "2026-06-03T09:09:59.585418",
+        "metric_value": 106.7036,
+        "rolling_mean_5s": 106.0486,
+        "rate_of_change": -0.005703
+    },
+    {
+        "timestamp": "2026-06-03T09:10:00.585418",
+        "metric_value": 107.8655,
+        "rolling_mean_5s": 106.5727,
+        "rate_of_change": 0.010889
+    },
+    {
+        "timestamp": "2026-06-03T09:10:01.585418",
+        "metric_value": 109.3809,
+        "rolling_mean_5s": 107.364,
+        "rate_of_change": 0.014049
+    },
+    {
+        "timestamp": "2026-06-03T09:10:02.585418",
+        "metric_value": 108.026,
+        "rolling_mean_5s": 107.8583,
+        "rate_of_change": -0.012387
+    },
+    {
+        "timestamp": "2026-06-03T09:10:03.585418",
+        "metric_value": 107.7096,
+        "rolling_mean_5s": 107.9371,
+        "rate_of_change": -0.002929
+    },
+    {
+        "timestamp": "2026-06-03T09:10:04.585418",
+        "metric_value": 107.5794,
+        "rolling_mean_5s": 108.1123,
+        "rate_of_change": -0.001209
+    },
+    {
+        "timestamp": "2026-06-03T09:10:05.585418",
+        "metric_value": 106.7844,
+        "rolling_mean_5s": 107.8961,
+        "rate_of_change": -0.00739
+    },
+    {
+        "timestamp": "2026-06-03T09:10:06.585418",
+        "metric_value": 105.1382,
+        "rolling_mean_5s": 107.0475,
+        "rate_of_change": -0.015416
+    },
+    {
+        "timestamp": "2026-06-03T09:10:07.585418",
+        "metric_value": 104.6895,
+        "rolling_mean_5s": 106.3802,
+        "rate_of_change": -0.004268
+    },
+    {
+        "timestamp": "2026-06-03T09:10:08.585418",
+        "metric_value": 104.2482,
+        "rolling_mean_5s": 105.6879,
+        "rate_of_change": -0.004215
+    },
+    {
+        "timestamp": "2026-06-03T09:10:09.585418",
+        "metric_value": 102.8018,
+        "rolling_mean_5s": 104.7324,
+        "rate_of_change": -0.013875
+    },
+    {
+        "timestamp": "2026-06-03T09:10:10.585418",
+        "metric_value": 102.3146,
+        "rolling_mean_5s": 103.8385,
+        "rate_of_change": -0.004739
+    },
+    {
+        "timestamp": "2026-06-03T09:10:11.585418",
+        "metric_value": 101.3387,
+        "rolling_mean_5s": 103.0786,
+        "rate_of_change": -0.009538
+    },
+    {
+        "timestamp": "2026-06-03T09:10:12.585418",
+        "metric_value": 102.4364,
+        "rolling_mean_5s": 102.6279,
+        "rate_of_change": 0.010832
+    },
+    {
+        "timestamp": "2026-06-03T09:10:13.585418",
+        "metric_value": 103.9944,
+        "rolling_mean_5s": 102.5772,
+        "rate_of_change": 0.015209
+    },
+    {
+        "timestamp": "2026-06-03T09:10:14.585418",
+        "metric_value": 104.6055,
+        "rolling_mean_5s": 102.9379,
+        "rate_of_change": 0.005876
+    },
+    {
+        "timestamp": "2026-06-03T09:10:15.585418",
+        "metric_value": 105.385,
+        "rolling_mean_5s": 103.552,
+        "rate_of_change": 0.007452
+    },
+    {
+        "timestamp": "2026-06-03T09:10:16.585418",
+        "metric_value": 105.3664,
+        "rolling_mean_5s": 104.3575,
+        "rate_of_change": -0.000176
+    },
+    {
+        "timestamp": "2026-06-03T09:10:17.585418",
+        "metric_value": 104.8527,
+        "rolling_mean_5s": 104.8408,
+        "rate_of_change": -0.004875
+    },
+    {
+        "timestamp": "2026-06-03T09:10:18.585418",
+        "metric_value": 103.3346,
+        "rolling_mean_5s": 104.7088,
+        "rate_of_change": -0.014478
+    },
+    {
+        "timestamp": "2026-06-03T09:10:19.585418",
+        "metric_value": 103.1333,
+        "rolling_mean_5s": 104.4144,
+        "rate_of_change": -0.001948
+    },
+    {
+        "timestamp": "2026-06-03T09:10:20.585418",
+        "metric_value": 103.4744,
+        "rolling_mean_5s": 104.0323,
+        "rate_of_change": 0.003307
+    },
+    {
+        "timestamp": "2026-06-03T09:10:21.585418",
+        "metric_value": 104.3245,
+        "rolling_mean_5s": 103.8239,
+        "rate_of_change": 0.008216
+    },
+    {
+        "timestamp": "2026-06-03T09:10:22.585418",
+        "metric_value": 104.1134,
+        "rolling_mean_5s": 103.676,
+        "rate_of_change": -0.002023
+    },
+    {
+        "timestamp": "2026-06-03T09:10:23.585418",
+        "metric_value": 102.9218,
+        "rolling_mean_5s": 103.5935,
+        "rate_of_change": -0.011445
+    },
+    {
+        "timestamp": "2026-06-03T09:10:24.585418",
+        "metric_value": 104.7142,
+        "rolling_mean_5s": 103.9097,
+        "rate_of_change": 0.017415
+    },
+    {
+        "timestamp": "2026-06-03T09:10:25.585418",
+        "metric_value": 105.1944,
+        "rolling_mean_5s": 104.2537,
+        "rate_of_change": 0.004586
+    },
+    {
+        "timestamp": "2026-06-03T09:10:26.585418",
+        "metric_value": 106.6666,
+        "rolling_mean_5s": 104.7221,
+        "rate_of_change": 0.013995
+    },
+    {
+        "timestamp": "2026-06-03T09:10:27.585418",
+        "metric_value": 108.2644,
+        "rolling_mean_5s": 105.5523,
+        "rate_of_change": 0.014979
+    },
+    {
+        "timestamp": "2026-06-03T09:10:28.585418",
+        "metric_value": 108.7026,
+        "rolling_mean_5s": 106.7084,
+        "rate_of_change": 0.004047
+    },
+    {
+        "timestamp": "2026-06-03T09:10:29.585418",
+        "metric_value": 109.7935,
+        "rolling_mean_5s": 107.7243,
+        "rate_of_change": 0.010036
+    },
+    {
+        "timestamp": "2026-06-03T09:10:30.585418",
+        "metric_value": 111.7555,
+        "rolling_mean_5s": 109.0365,
+        "rate_of_change": 0.01787
+    },
+    {
+        "timestamp": "2026-06-03T09:10:31.585418",
+        "metric_value": 111.8725,
+        "rolling_mean_5s": 110.0777,
+        "rate_of_change": 0.001047
+    },
+    {
+        "timestamp": "2026-06-03T09:10:32.585418",
+        "metric_value": 109.8872,
+        "rolling_mean_5s": 110.4023,
+        "rate_of_change": -0.017746
+    },
+    {
+        "timestamp": "2026-06-03T09:10:33.585418",
+        "metric_value": 110.2741,
+        "rolling_mean_5s": 110.7166,
+        "rate_of_change": 0.003521
+    },
+    {
+        "timestamp": "2026-06-03T09:10:34.585418",
+        "metric_value": 111.1336,
+        "rolling_mean_5s": 110.9846,
+        "rate_of_change": 0.007794
+    },
+    {
+        "timestamp": "2026-06-03T09:10:35.585418",
+        "metric_value": 112.1538,
+        "rolling_mean_5s": 111.0642,
+        "rate_of_change": 0.00918
+    },
+    {
+        "timestamp": "2026-06-03T09:10:36.585418",
+        "metric_value": 110.7243,
+        "rolling_mean_5s": 110.8346,
+        "rate_of_change": -0.012746
+    },
+    {
+        "timestamp": "2026-06-03T09:10:37.585418",
+        "metric_value": 109.6038,
+        "rolling_mean_5s": 110.7779,
+        "rate_of_change": -0.01012
+    },
+    {
+        "timestamp": "2026-06-03T09:10:38.585418",
+        "metric_value": 110.0036,
+        "rolling_mean_5s": 110.7238,
+        "rate_of_change": 0.003648
+    },
+    {
+        "timestamp": "2026-06-03T09:10:39.585418",
+        "metric_value": 111.8373,
+        "rolling_mean_5s": 110.8646,
+        "rate_of_change": 0.016669
+    },
+    {
+        "timestamp": "2026-06-03T09:10:40.585418",
+        "metric_value": 111.7176,
+        "rolling_mean_5s": 110.7773,
+        "rate_of_change": -0.00107
+    },
+    {
+        "timestamp": "2026-06-03T09:10:41.585418",
+        "metric_value": 113.1417,
+        "rolling_mean_5s": 111.2608,
+        "rate_of_change": 0.012747
+    },
+    {
+        "timestamp": "2026-06-03T09:10:42.585418",
+        "metric_value": 112.3387,
+        "rolling_mean_5s": 111.8078,
+        "rate_of_change": -0.007097
+    },
+    {
+        "timestamp": "2026-06-03T09:10:43.585418",
+        "metric_value": 113.377,
+        "rolling_mean_5s": 112.4825,
+        "rate_of_change": 0.009243
+    },
+    {
+        "timestamp": "2026-06-03T09:10:44.585418",
+        "metric_value": 112.1144,
+        "rolling_mean_5s": 112.5379,
+        "rate_of_change": -0.011136
+    },
+    {
+        "timestamp": "2026-06-03T09:10:45.585418",
+        "metric_value": 112.9692,
+        "rolling_mean_5s": 112.7882,
+        "rate_of_change": 0.007624
+    },
+    {
+        "timestamp": "2026-06-03T09:10:46.585418",
+        "metric_value": 114.7971,
+        "rolling_mean_5s": 113.1193,
+        "rate_of_change": 0.016181
+    },
+    {
+        "timestamp": "2026-06-03T09:10:47.585418",
+        "metric_value": 113.5914,
+        "rolling_mean_5s": 113.3698,
+        "rate_of_change": -0.010503
+    },
+    {
+        "timestamp": "2026-06-03T09:10:48.585418",
+        "metric_value": 113.9604,
+        "rolling_mean_5s": 113.4865,
+        "rate_of_change": 0.003248
+    },
+    {
+        "timestamp": "2026-06-03T09:10:49.585418",
+        "metric_value": 115.8651,
+        "rolling_mean_5s": 114.2366,
+        "rate_of_change": 0.016714
+    },
+    {
+        "timestamp": "2026-06-03T09:10:50.585418",
+        "metric_value": 114.6351,
+        "rolling_mean_5s": 114.5698,
+        "rate_of_change": -0.010616
+    },
+    {
+        "timestamp": "2026-06-03T09:10:51.585418",
+        "metric_value": 113.9329,
+        "rolling_mean_5s": 114.397,
+        "rate_of_change": -0.006126
+    },
+    {
+        "timestamp": "2026-06-03T09:10:52.585418",
+        "metric_value": 114.3867,
+        "rolling_mean_5s": 114.556,
+        "rate_of_change": 0.003983
+    },
+    {
+        "timestamp": "2026-06-03T09:10:53.585418",
+        "metric_value": 115.2758,
+        "rolling_mean_5s": 114.8191,
+        "rate_of_change": 0.007773
+    },
+    {
+        "timestamp": "2026-06-03T09:10:54.585418",
+        "metric_value": 113.7686,
+        "rolling_mean_5s": 114.3998,
+        "rate_of_change": -0.013075
+    },
+    {
+        "timestamp": "2026-06-03T09:10:55.585418",
+        "metric_value": 114.1867,
+        "rolling_mean_5s": 114.3101,
+        "rate_of_change": 0.003675
+    },
+    {
+        "timestamp": "2026-06-03T09:10:56.585418",
+        "metric_value": 115.9546,
+        "rolling_mean_5s": 114.7145,
+        "rate_of_change": 0.015483
+    },
+    {
+        "timestamp": "2026-06-03T09:10:57.585418",
+        "metric_value": 117.2977,
+        "rolling_mean_5s": 115.2967,
+        "rate_of_change": 0.011583
+    },
+    {
+        "timestamp": "2026-06-03T09:10:58.585418",
+        "metric_value": 117.5757,
+        "rolling_mean_5s": 115.7567,
+        "rate_of_change": 0.00237
+    },
+    {
+        "timestamp": "2026-06-03T09:10:59.585418",
+        "metric_value": 118.596,
+        "rolling_mean_5s": 116.7221,
+        "rate_of_change": 0.008678
+    },
+    {
+        "timestamp": "2026-06-03T09:11:00.585418",
+        "metric_value": 119.8723,
+        "rolling_mean_5s": 117.8593,
+        "rate_of_change": 0.010762
+    },
+    {
+        "timestamp": "2026-06-03T09:11:01.585418",
+        "metric_value": 118.1849,
+        "rolling_mean_5s": 118.3053,
+        "rate_of_change": -0.014077
+    },
+    {
+        "timestamp": "2026-06-03T09:11:02.585418",
+        "metric_value": 117.6254,
+        "rolling_mean_5s": 118.3709,
+        "rate_of_change": -0.004734
+    },
+    {
+        "timestamp": "2026-06-03T09:11:03.585418",
+        "metric_value": 117.2013,
+        "rolling_mean_5s": 118.296,
+        "rate_of_change": -0.003606
+    },
+    {
+        "timestamp": "2026-06-03T09:11:04.585418",
+        "metric_value": 117.8139,
+        "rolling_mean_5s": 118.1396,
+        "rate_of_change": 0.005227
+    },
+    {
+        "timestamp": "2026-06-03T09:11:05.585418",
+        "metric_value": 119.8009,
+        "rolling_mean_5s": 118.1253,
+        "rate_of_change": 0.016866
+    },
+    {
+        "timestamp": "2026-06-03T09:11:06.585418",
+        "metric_value": 121.0829,
+        "rolling_mean_5s": 118.7049,
+        "rate_of_change": 0.010701
+    },
+    {
+        "timestamp": "2026-06-03T09:11:07.585418",
+        "metric_value": 122.1246,
+        "rolling_mean_5s": 119.6047,
+        "rate_of_change": 0.008603
+    },
+    {
+        "timestamp": "2026-06-03T09:11:08.585418",
+        "metric_value": 121.645,
+        "rolling_mean_5s": 120.4935,
+        "rate_of_change": -0.003927
+    },
+    {
+        "timestamp": "2026-06-03T09:11:09.585418",
+        "metric_value": 120.83,
+        "rolling_mean_5s": 121.0967,
+        "rate_of_change": -0.0067
+    },
+    {
+        "timestamp": "2026-06-03T09:11:10.585418",
+        "metric_value": 121.3435,
+        "rolling_mean_5s": 121.4052,
+        "rate_of_change": 0.00425
+    },
+    {
+        "timestamp": "2026-06-03T09:11:11.585418",
+        "metric_value": 122.0289,
+        "rolling_mean_5s": 121.5944,
+        "rate_of_change": 0.005648
+    },
+    {
+        "timestamp": "2026-06-03T09:11:12.585418",
+        "metric_value": 122.1927,
+        "rolling_mean_5s": 121.608,
+        "rate_of_change": 0.001342
+    },
+    {
+        "timestamp": "2026-06-03T09:11:13.585418",
+        "metric_value": 120.2612,
+        "rolling_mean_5s": 121.3313,
+        "rate_of_change": -0.015807
+    },
+    {
+        "timestamp": "2026-06-03T09:11:14.585418",
+        "metric_value": 121.6874,
+        "rolling_mean_5s": 121.5027,
+        "rate_of_change": 0.011859
+    },
+    {
+        "timestamp": "2026-06-03T09:11:15.585418",
+        "metric_value": 122.2769,
+        "rolling_mean_5s": 121.6894,
+        "rate_of_change": 0.004844
+    },
+    {
+        "timestamp": "2026-06-03T09:11:16.585418",
+        "metric_value": 123.1715,
+        "rolling_mean_5s": 121.9179,
+        "rate_of_change": 0.007316
+    },
+    {
+        "timestamp": "2026-06-03T09:11:17.585418",
+        "metric_value": 123.3882,
+        "rolling_mean_5s": 122.157,
+        "rate_of_change": 0.001759
+    },
+    {
+        "timestamp": "2026-06-03T09:11:18.585418",
+        "metric_value": 124.9023,
+        "rolling_mean_5s": 123.0853,
+        "rate_of_change": 0.012271
+    },
+    {
+        "timestamp": "2026-06-03T09:11:19.585418",
+        "metric_value": 123.5595,
+        "rolling_mean_5s": 123.4597,
+        "rate_of_change": -0.010751
+    },
+    {
+        "timestamp": "2026-06-03T09:11:20.585418",
+        "metric_value": 121.7215,
+        "rolling_mean_5s": 123.3486,
+        "rate_of_change": -0.014875
+    },
+    {
+        "timestamp": "2026-06-03T09:11:21.585418",
+        "metric_value": 119.7321,
+        "rolling_mean_5s": 122.6607,
+        "rate_of_change": -0.016344
+    },
+    {
+        "timestamp": "2026-06-03T09:11:22.585418",
+        "metric_value": 121.2876,
+        "rolling_mean_5s": 122.2406,
+        "rate_of_change": 0.012992
+    },
+    {
+        "timestamp": "2026-06-03T09:11:23.585418",
+        "metric_value": 121.6537,
+        "rolling_mean_5s": 121.5909,
+        "rate_of_change": 0.003018
+    },
+    {
+        "timestamp": "2026-06-03T09:11:24.585418",
+        "metric_value": 121.3427,
+        "rolling_mean_5s": 121.1475,
+        "rate_of_change": -0.002556
+    },
+    {
+        "timestamp": "2026-06-03T09:11:25.585418",
+        "metric_value": 122.8668,
+        "rolling_mean_5s": 121.3766,
+        "rate_of_change": 0.01256
+    },
+    {
+        "timestamp": "2026-06-03T09:11:26.585418",
+        "metric_value": 122.3134,
+        "rolling_mean_5s": 121.8928,
+        "rate_of_change": -0.004504
+    }
+]

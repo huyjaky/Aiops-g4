@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIOps Quiz - Tuần 1: Metric Anomaly Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            height: 8px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 99px;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+
+        .diff-easy { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .diff-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .diff-hard { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .question-text {
+            font-size: 1.5rem;
+            line-height: 1.4;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 1.2rem 1.5rem;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin-right: 15px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .option-btn.selected {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--primary);
+        }
+        
+        .option-btn.selected::before {
+            border-color: var(--primary);
+            background: var(--primary);
+            box-shadow: inset 0 0 0 4px var(--bg-color);
+        }
+
+        .option-btn.correct {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: var(--success) !important;
+        }
+
+        .option-btn.correct::before {
+            background: var(--success) !important;
+            border-color: var(--success) !important;
+            box-shadow: inset 0 0 0 4px var(--bg-color) !important;
+        }
+
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: var(--danger) !important;
+        }
+
+        .option-btn.wrong::before {
+            background: var(--danger) !important;
+            border-color: var(--danger) !important;
+            box-shadow: inset 0 0 0 4px var(--bg-color) !important;
+        }
+
+        .controls {
+            margin-top: 2.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .next-btn {
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 99px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+
+        .next-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .next-btn:hover {
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .result-screen {
+            text-align: center;
+            display: none;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) calc(var(--score-pct) * 1%), rgba(255,255,255,0.05) 0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .score-circle::after {
+            content: '';
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            background: var(--bg-color);
+            border-radius: 50%;
+        }
+
+        .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 3rem;
+            font-weight: 800;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <div id="quiz-screen">
+        <div class="header">
+            <h1>AIOps Quiz - Tuần 1: Metric Anomaly Detection</h1>
+            <p>Trắc nghiệm kiến thức AIOps</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+
+        <div class="question-meta">
+            <span id="q-counter">Câu hỏi 1 / 50</span>
+            <span id="q-difficulty" class="difficulty-badge diff-easy">Mức độ: Dễ</span>
+        </div>
+
+        <div class="question-text" id="q-text">Đang tải câu hỏi...</div>
+
+        <div class="options-grid" id="options"></div>
+
+        <div class="controls">
+            <button class="next-btn" id="next-btn">Tiếp theo →</button>
+        </div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h1>Hoàn Thành!</h1>
+        <p style="margin-bottom: 2rem; color: var(--text-muted); font-size: 1.2rem;">Kết quả phân tích AIOps của bạn</p>
+        
+        <div class="score-circle" id="score-circle" style="--score-pct: 0;">
+            <div class="score-value" id="score-text">0%</div>
+        </div>
+        
+        <div style="font-size: 1.5rem; margin-bottom: 2rem;">
+            Đúng <span id="correct-count" style="color: var(--success); font-weight: bold;">0</span> / <span id="total-count">50</span> câu
+        </div>
+
+        <button class="next-btn visible" onclick="location.reload()">Thử lại</button>
+    </div>
+</div>
+
+<script>
+const questions = [{"question": "Trong AIOps, mục đích chính của anomaly detection là gì?", "options": ["Tăng tốc độ truy vấn cơ sở dữ liệu", "Phát hiện 'cái lạ' trước khi nó trở thành outage", "Giảm thiểu dung lượng ổ cứng", "Chặn các cuộc tấn công DDoS"], "answer": 1, "difficulty": "easy"}, {"question": "Hầu hết các phương pháp thống kê giả định dữ liệu có phân phối gì?", "options": ["Phân phối nhị thức", "Phân phối chuẩn (Gaussian)", "Phân phối Poisson", "Phân phối đều"], "answer": 1, "difficulty": "easy"}, {"question": "Trong phân phối chuẩn, bao nhiêu phần trăm dữ liệu nằm trong ±3σ?", "options": ["68%", "95%", "99.7%", "100%"], "answer": 2, "difficulty": "easy"}, {"question": "Standard deviation (σ) đo lường điều gì?", "options": ["Giá trị lớn nhất của dữ liệu", "Sự dao động của dữ liệu quanh giá trị trung bình", "Số lượng phần tử trong tập dữ liệu", "Giá trị xuất hiện nhiều nhất"], "answer": 1, "difficulty": "easy"}, {"question": "Hiện tượng dữ liệu không đối xứng, bị 'kéo' về một phía gọi là gì?", "options": ["Stationarity", "Kurtosis", "Skewness", "Trend"], "answer": 2, "difficulty": "easy"}, {"question": "Metric latency thường có dạng phân phối nào?", "options": ["Đối xứng tuyệt đối", "Lệch trái (Left-skewed)", "Lệch phải (Right-skewed)", "Phân phối nhị thức"], "answer": 2, "difficulty": "easy"}, {"question": "Tại sao quy tắc 3σ thường thất bại trên dữ liệu bị skewed?", "options": ["Vì nó tính toán quá phức tạp", "Vì nó có thể tạo ra threshold âm hoặc quá xa ở đuôi dài", "Vì nó không tính được trung bình", "Vì nó cần quá nhiều dữ liệu"], "answer": 1, "difficulty": "easy"}, {"question": "Giá trị skewness bằng bao nhiêu thì được coi là dữ liệu gần Gaussian?", "options": ["|skewness| < 0.5", "0.5 < |skewness| < 1", "|skewness| > 1", "|skewness| > 2"], "answer": 0, "difficulty": "easy"}, {"question": "Cách đơn giản và hiệu quả nhất để xử lý dữ liệu bị right-skewed là gì?", "options": ["Xóa các giá trị lớn", "Sử dụng Log transform", "Nhân đôi dữ liệu", "Đảo ngược dữ liệu"], "answer": 1, "difficulty": "easy"}, {"question": "Dữ liệu Stationary là dữ liệu có đặc điểm gì?", "options": ["Tăng liên tục theo thời gian", "Chỉ xuất hiện vào ban ngày", "Mean không đổi theo thời gian, dao động ổn định", "Không có giá trị âm"], "answer": 2, "difficulty": "easy"}, {"question": "Thành phần Seasonal trong time series là gì?", "options": ["Phần nhiễu ngẫu nhiên", "Xu hướng tăng giảm dài hạn", "Pattern lặp lại với chu kỳ cố định", "Sự thay đổi đột ngột không dự báo được"], "answer": 2, "difficulty": "easy"}, {"question": "Phương pháp đơn giản nhất để phát hiện giá trị lạ mà không cần train model là gì?", "options": ["Z-Score (3-Sigma)", "Isolation Forest", "Autoencoder", "One-Class SVM"], "answer": 0, "difficulty": "easy"}, {"question": "Z-score cho biết điều gì?", "options": ["Thời gian xử lý của request", "Data point cách mean bao nhiêu standard deviation", "Tỷ lệ lỗi của hệ thống", "Số lượng anomaly trong ngày"], "answer": 1, "difficulty": "easy"}, {"question": "Tại sao lại dùng rolling window thay vì toàn bộ dữ liệu lịch sử trong Z-score?", "options": ["Để phản ánh 'bình thường' tại thời điểm hiện tại và tránh outdated", "Để tiết kiệm bộ nhớ", "Để vẽ biểu đồ đẹp hơn", "Để tránh bị ảnh hưởng bởi giờ ban đêm"], "answer": 0, "difficulty": "easy"}, {"question": "Nhược điểm của việc dùng rolling window trong 3σ là gì?", "options": ["Dễ bị overfit", "Không bắt được lỗi cú pháp", "Outlier làm 'ô nhiễm' window gây miss anomaly liên tiếp", "Cần sử dụng GPU để tính toán"], "answer": 2, "difficulty": "easy"}, {"question": "Nếu metric CPU ổn định, không có seasonal, gần Gaussian thì dùng phương pháp nào?", "options": ["Isolation Forest", "Autoencoder", "3σ (Z-Score)", "LSTM"], "answer": 2, "difficulty": "medium"}, {"question": "Việc dùng rolling window với size quá nhỏ (10-30) sẽ dẫn đến hậu quả gì?", "options": ["Phản hồi quá chậm", "Nhiều false alarm, noisy", "Chạy rất tốn RAM", "Lỗi thuật toán"], "answer": 1, "difficulty": "medium"}, {"question": "Khi xảy ra hiện tượng memory leak (tăng dần rất nhỏ), phương pháp nào phù hợp nhất?", "options": ["3σ (Z-Score)", "STL", "EWMA", "Autoencoder"], "answer": 2, "difficulty": "medium"}, {"question": "Trong EWMA, ý nghĩa của α (alpha) là gì?", "options": ["Smoothing factor quyết định 'nhớ bao xa'", "Ngưỡng phát hiện anomaly", "Kích thước của rolling window", "Số lượng cây trong rừng"], "answer": 0, "difficulty": "medium"}, {"question": "Nếu chọn α = 0.9 trong EWMA thì model sẽ hoạt động thế nào?", "options": ["Nhớ trung bình toàn bộ chuyến đi", "Chỉ tin hiện tại, phản ứng nhanh nhưng nhạy nhiễu", "Hoàn toàn bỏ qua hiện tại", "Không bị ảnh hưởng bởi nhiễu"], "answer": 1, "difficulty": "medium"}, {"question": "Để detect trend shift chậm (như memory leak), α trong EWMA nên ở khoảng nào?", "options": ["0.05 - 0.1", "0.3 - 0.5", "0.7 - 0.9", "> 1.0"], "answer": 0, "difficulty": "medium"}, {"question": "STL viết tắt của cụm từ nào?", "options": ["Standard Time Logging", "Seasonal and Trend decomposition using Loess", "System Threshold Limit", "Simple Time Locating"], "answer": 1, "difficulty": "medium"}, {"question": "Trong phân rã STL, anomaly thường được detect rõ ràng nhất trên thành phần nào?", "options": ["Trend", "Seasonal", "Residual", "Original Data"], "answer": 2, "difficulty": "medium"}, {"question": "Tại sao cần dùng tham số `robust=True` trong STL?", "options": ["Để chạy thuật toán nhanh hơn", "Giảm trọng số của outlier để tránh kéo sai trend, giúp bắt anomaly dễ hơn", "Để tương thích với mọi loại dữ liệu", "Để hiển thị kết quả thành đồ thị"], "answer": 1, "difficulty": "medium"}, {"question": "Nếu dữ liệu có độ phân giải 5-minute và có daily pattern, giá trị `period` trong STL phải là bao nhiêu?", "options": ["1440", "288", "24", "12"], "answer": 1, "difficulty": "medium"}, {"question": "Làm sao để verify giá trị `period` có đúng hay không trước khi dùng STL?", "options": ["Dùng hàm tự tương quan ACF", "Tính giá trị Z-Score", "Vẽ biểu đồ hình tròn", "Hỏi team DevOps"], "answer": 0, "difficulty": "medium"}, {"question": "Isolation Forest hoạt động dựa trên nguyên lý cốt lõi nào?", "options": ["Tính khoảng cách Euclidean", "Anomaly là điểm dễ tách khỏi đám đông với path length ngắn", "Phân loại bằng mạng nơ-ron", "Phân tích cú pháp của log"], "answer": 1, "difficulty": "medium"}, {"question": "Trong Isolation Forest, một điểm là anomaly sẽ có đặc điểm gì về số lần split?", "options": ["Cần ít lần split hơn (path ngắn)", "Cần rất nhiều lần split", "Không bao giờ bị split", "Số lần split bằng chính xác số cây"], "answer": 0, "difficulty": "medium"}, {"question": "Tại sao phải tạo feature cho time series trước khi đưa vào Isolation Forest?", "options": ["Để nén dung lượng dữ liệu", "Vì IF xem mỗi điểm độc lập, không hiểu bối cảnh hay thứ tự thời gian", "Để tăng tốc độ tính toán", "Để chuyển sang dạng Unsupervised"], "answer": 1, "difficulty": "medium"}, {"question": "Tham số `contamination` trong Isolation Forest có ý nghĩa gì?", "options": ["Độ sai lệch của cảm biến", "Tỷ lệ phần trăm dữ liệu được ước lượng là anomaly", "Số cây trong rừng", "Kích thước tập test"], "answer": 1, "difficulty": "medium"}, {"question": "Điểm khác biệt lớn nhất giữa Isolation Forest và One-Class SVM là gì?", "options": ["One-Class SVM cần dữ liệu sạch chỉ chứa normal data để train", "One-Class SVM chạy nhanh hơn nhiều", "Isolation Forest chỉ dùng cho Univariate", "Isolation Forest cần GPU"], "answer": 0, "difficulty": "medium"}, {"question": "Mô hình DL nào học cách nén dữ liệu và dùng reconstruction error để phát hiện anomaly?", "options": ["CNN", "RNN", "Autoencoder", "Transformer"], "answer": 2, "difficulty": "medium"}, {"question": "Khi nào thì dùng LSTM Autoencoder thay vì Autoencoder thông thường?", "options": ["Khi dữ liệu cực lớn", "Khi có temporal dependency mạnh", "Khi dữ liệu không có nhãn", "Khi muốn chạy nhanh hơn"], "answer": 1, "difficulty": "medium"}, {"question": "Quy tắc áp dụng các phương pháp anomaly detection từ đơn giản đến phức tạp trong AIOps là gì?", "options": ["DL → IF → STL", "STL → DL → 3σ", "3σ → STL → Isolation Forest → DL", "Tùy hứng team Lead"], "answer": 2, "difficulty": "medium"}, {"question": "Khi có 50+ metric đồng thời và cần detect pattern phức tạp mà IF có thể miss, ta nên dùng phương pháp nào?", "options": ["EWMA", "3σ", "Autoencoder", "Z-Score"], "answer": 2, "difficulty": "medium"}, {"question": "Trong kịch bản memory leak, tại sao univariate detector thường miss ở giai đoạn đầu?", "options": ["Do dữ liệu bị sai lệch", "Vì nó không theo dõi GC", "Vì sự thay đổi của từng metric diễn ra rất chậm và vẫn nằm trong band", "Vì CPU luôn luôn giữ ở 100%"], "answer": 2, "difficulty": "hard"}, {"question": "Làm thế nào Isolation Forest bắt được memory leak trong kịch bản nhiều metric?", "options": ["Dùng ngưỡng tĩnh siêu nhạy", "Bắt được correlation bất thường (VD: memory tăng nhưng CPU không đổi)", "Giả lập lại toàn bộ RAM", "Tự động gửi mail hỏi developer"], "answer": 1, "difficulty": "hard"}, {"question": "Khi so sánh 3σ và Isolation Forest trên cùng một dữ liệu synthetic, nhận xét nào sau đây đúng?", "options": ["Cả hai đều có Precision 100%", "3σ có recall cao nhưng nhiều FP, IF có precision cao nhưng dễ miss anomaly nhỏ", "IF có recall 100% nhưng rất nhiều False Positives", "Cả 2 đều thất bại với dữ liệu synthetic"], "answer": 1, "difficulty": "hard"}, {"question": "Trong feature engineering cho time series, hàm nào tính toán `rate_of_change`?", "options": ["s.diff()", "s.rolling()", "s.shift()", "s.ewm()"], "answer": 0, "difficulty": "hard"}, {"question": "Trong môi trường AIOps production, tại sao lại ưu tiên Recall hơn Precision?", "options": ["Vì Precision khó tính hơn", "Vì miss anomaly nguy hiểm hơn, gây outage và mất doanh thu", "Vì Recall luôn đạt 100%", "Vì sếp thích Recall cao"], "answer": 1, "difficulty": "hard"}, {"question": "Precision được tính bằng công thức nào?", "options": ["TP / (TP + FN)", "TP / (TP + FP)", "FP / (TP + FP)", "2 * P * R / (P + R)"], "answer": 1, "difficulty": "hard"}, {"question": "Nếu mô hình có Precision là 0.3 thì hậu quả thực tế là gì?", "options": ["Bỏ sót 70% lỗi thực sự", "Cứ 10 alert thì có 7 cái là false alarm, gây alert fatigue cho on-call", "CPU của server sẽ bị quá tải", "Hệ thống sẽ không bao giờ alert"], "answer": 1, "difficulty": "hard"}, {"question": "Chỉ số KPI quan trọng nhất trong AIOps là gì?", "options": ["F1 Score", "TTD (Time-to-Detect)", "Accuracy", "Training Time"], "answer": 1, "difficulty": "hard"}, {"question": "Khi sử dụng Interquartile Range (IQR) để bắt anomaly, Q1 và Q3 là vị phân vị thứ bao nhiêu?", "options": ["10% và 90%", "25% và 75%", "33% và 66%", "2% và 98%"], "answer": 1, "difficulty": "hard"}, {"question": "Hàm np.log1p(data) có tác dụng gì khi xử lý dữ liệu bị skew?", "options": ["Tính trung bình logarit", "Lấy đạo hàm của logarit", "Biến đổi log(1 + x) để nén giá trị lớn và tránh lỗi log(0)", "Tính hàm mũ của dữ liệu"], "answer": 2, "difficulty": "hard"}, {"question": "Tại sao pattern ban ngày cao ban đêm thấp lại làm sai lệch kết quả của 3σ?", "options": ["Vì 3σ không hiểu khái niệm thời gian", "Vì nó tính mean tổng khiến ngưỡng trở nên không chính xác cho từng thời điểm cụ thể", "Vì 3σ yêu cầu dữ liệu ban đêm phải bằng 0", "Do ban đêm ít request nên CPU bị nhiễu"], "answer": 1, "difficulty": "hard"}, {"question": "Trong Autoencoder, phần học cách khôi phục lại dữ liệu từ không gian nén gọi là gì?", "options": ["Encoder", "Decoder", "Transformer", "Generator"], "answer": 1, "difficulty": "hard"}, {"question": "Khi tham số `period` trong STL đặt sai (vd: 1440 cho dữ liệu 5 phút), chuyện gì sẽ xảy ra?", "options": ["Chương trình sẽ văng lỗi Crash", "STL tự động sửa lại period", "Decompose sai lệch hoàn toàn dẫn đến miss anomaly hoặc sinh nhiều false alarm", "Chỉ ảnh hưởng tới tốc độ chạy chậm hơn"], "answer": 2, "difficulty": "hard"}, {"question": "Để giải quyết hiện tượng 'outlier ô nhiễm window' của 3σ, ta có thể dùng cách gì?", "options": ["Khởi động lại server", "Tăng window size lên 10 lần", "Dùng rolling median thay cho mean hoặc dùng STL decomposition", "Không thể giải quyết được"], "answer": 2, "difficulty": "hard"}, {"question": "Tại sao lại dùng F1 Score (Harmonic mean) thay vì trung bình cộng của Precision và Recall?", "options": ["Vì nó luôn lớn hơn trung bình cộng", "Để cân bằng giữa Precision và Recall khi cần 1 số duy nhất so sánh 2 model", "Vì công thức ngắn hơn", "Vì Scikit-learn chỉ hỗ trợ Harmonic mean"], "answer": 1, "difficulty": "hard"}];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+const qText = document.getElementById('q-text');
+const optionsDiv = document.getElementById('options');
+const nextBtn = document.getElementById('next-btn');
+const progress = document.getElementById('progress');
+const qCounter = document.getElementById('q-counter');
+const qDiff = document.getElementById('q-difficulty');
+
+function loadQuestion() {
+    answered = false;
+    nextBtn.classList.remove('visible');
+    
+    const q = questions[currentQ];
+    qText.textContent = q.question;
+    
+    // Update Meta
+    qCounter.textContent = `Câu hỏi ${currentQ + 1} / ${questions.length}`;
+    progress.style.width = `${(currentQ / questions.length) * 100}%`;
+    
+    let diffClass = "diff-easy";
+    let diffText = "Mức độ: Dễ";
+    if (q.difficulty === "medium") { diffClass = "diff-medium"; diffText = "Mức độ: Trung Bình"; }
+    if (q.difficulty === "hard") { diffClass = "diff-hard"; diffText = "Mức độ: Khó"; }
+    
+    qDiff.className = `difficulty-badge ${diffClass}`;
+    qDiff.textContent = diffText;
+
+    optionsDiv.innerHTML = '';
+    
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn animate-fade';
+        btn.style.animationDelay = `${idx * 0.1}s`;
+        btn.textContent = opt;
+        btn.onclick = () => selectOption(idx, btn);
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function selectOption(idx, btnElement) {
+    if (answered) return;
+    answered = true;
+    
+    const q = questions[currentQ];
+    const btns = optionsDiv.querySelectorAll('.option-btn');
+    
+    btns.forEach(b => b.disabled = true);
+    
+    if (idx === q.answer) {
+        btnElement.classList.add('correct');
+        score++;
+    } else {
+        btnElement.classList.add('wrong');
+        btns[q.answer].classList.add('correct');
+    }
+    
+    nextBtn.classList.add('visible');
+}
+
+nextBtn.onclick = () => {
+    currentQ++;
+    if (currentQ < questions.length) {
+        loadQuestion();
+    } else {
+        showResult();
+    }
+};
+
+function showResult() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    const resScreen = document.getElementById('result-screen');
+    resScreen.style.display = 'block';
+    resScreen.classList.add('animate-fade');
+    
+    const pct = Math.round((score / questions.length) * 100);
+    document.getElementById('score-circle').style.setProperty('--score-pct', pct);
+    document.getElementById('score-text').textContent = `${pct}%`;
+    document.getElementById('correct-count').textContent = score;
+    document.getElementById('total-count').textContent = questions.length;
+}
+
+// Start
+loadQuestion();
+</script>
+</body>
+</html>
