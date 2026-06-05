@@ -1,6 +1,6 @@
 # Detection Approach — DESIGN.md
 
-## Approach tôi dùng
+## Approach em dùng
 Sử dụng Moving Window Average (Trung bình trượt) kết hợp với Static Thresholds (Ngưỡng tĩnh) cho các metrics đặc trưng.
 
 ## Tại sao chọn approach này
