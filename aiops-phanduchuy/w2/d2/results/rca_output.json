@@ -1,0 +1,94 @@
+{
+  "clusters_analyzed": 3,
+  "results": [
+    {
+      "cluster_id": "c-000-000",
+      "graph_top3": [
+        [
+          "payment-svc",
+          0.9647751682262544
+        ],
+        [
+          "checkout-svc",
+          0.76
+        ],
+        [
+          "edge-lb",
+          0.6947749342801611
+        ]
+      ],
+      "root_cause": "payment-svc",
+      "class": "connection_pool_exhaustion",
+      "confidence": 0.96,
+      "actions": [
+        "Rollback payment-svc to the last known good version and verify connection pool usage returns to normal.",
+        "Temporarily increase the payment DB connection pool size and/or worker limits to restore checkout throughput while monitoring for saturation.",
+        "Add or tighten alerts on payment-svc pool utilization, connection wait time, and checkout error rate to catch recurrence earlier."
+      ],
+      "reasoning": "payment-svc is the strongest candidate because it has the highest RCA score and it sits directly on the checkout critical path, which explains the cascade into checkout-svc, cart-svc, and notification-svc alerts. The closest historical match is a prior payment-svc connection pool exhaustion incident with the same downstream failure pattern, making this more likely than edge-lb or checkout-svc as the primary fault.",
+      "similar_incidents": [
+        "INC-2025-11-08",
+        "INC-2026-03-20"
+      ],
+      "method": "graph+llm"
+    },
+    {
+      "cluster_id": "c-001-000",
+      "graph_top3": [
+        [
+          "checkout-svc",
+          0.7000000000000001
+        ],
+        [
+          "search-svc",
+          0.5
+        ]
+      ],
+      "root_cause": "checkout-svc",
+      "class": "deadlock",
+      "confidence": 0.78,
+      "actions": [
+        "Inspect checkout transaction traces and lock wait graphs for concurrent acquisition order across cart-redis and payments-db.",
+        "Mitigate by enforcing a consistent lock ordering or adding/adjusting lock timeouts to break the deadlock cycle.",
+        "Roll out a targeted fix and verify error rate/latency recovery in checkout-svc; keep search-svc under observation as a secondary impacted service."
+      ],
+      "reasoning": "checkout-svc is the top graph RCA candidate and matches a strong historical pattern: the closest past incident for checkout was a deadlock involving cart-redis and payments-db. Since both checkout-svc and search-svc are alerted, checkout is more likely the primary fault source while search is a downstream symptom or parallel impact. The incident shape aligns better with deadlock than with search's past slow-query or cache-cold-start issues.",
+      "similar_incidents": [
+        "INC-2026-04-02",
+        "INC-2026-01-29",
+        "INC-2026-05-25"
+      ],
+      "method": "graph+llm"
+    },
+    {
+      "cluster_id": "c-002-000",
+      "graph_top3": [
+        [
+          "payment-svc",
+          0.9
+        ],
+        [
+          "notification-svc",
+          0.8
+        ],
+        [
+          "edge-lb",
+          0.7000000000000001
+        ]
+      ],
+      "root_cause": "payment-svc",
+      "class": "connection_pool_exhaustion",
+      "confidence": 0.93,
+      "actions": [
+        "Check payment-svc connection pool saturation, thread/worker backlog, and DB/client connection metrics; confirm whether connections are being held or leaked.",
+        "Rollback the most recent payment-svc deployment or config change if a regression is present, and restart the service to clear stuck connections.",
+        "Apply/verify connection pool safeguards (max_idle_time, leak detection, sane pool limits) and monitor error rate/latency recovery."
+      ],
+      "reasoning": "payment-svc is the top-ranked RCA candidate and has a very strong historical match to a prior incident caused by connection pool exhaustion, which produced widespread downstream timeouts. edge-lb and notification-svc are likely secondary symptoms because they are also alerted, but they are lower-ranked and fit better as impacted dependencies than as the initiating fault. The narrow time window and service pattern are more consistent with a backend resource exhaustion issue than DDoS or TLS expiry.",
+      "similar_incidents": [
+        "INC-2025-09-05"
+      ],
+      "method": "graph+llm"
+    }
+  ]
+}
