@@ -1,52 +1,86 @@
-# Báo cáo kết quả phân tích RCA (Root Cause Analysis) - W2-D2
-
----
-
-## Câu hỏi 1: Đối với cluster chính, root cause là gì + lý do?
+## Câu hỏi 1: Đối với cluster chính, root cause là gì và vì sao?
 
 ### Tóm tắt cụm sự cố chính (c-000-000)
-* **Thời gian diễn ra**: Từ `2026-06-12T09:42:01Z` đến `2026-06-12T09:46:01Z`.
-* **Số lượng alerts**: 15 alerts.
-* **Các service liên quan**: `checkout-svc`, `edge-lb`, `payment-svc`, `cart-svc`, `notification-svc`, `recommender-svc`.
 
-### Kết quả phân tích & Lý do xác thực
-* **Root Cause xác định**: **`payment-svc`** (Phân loại: `connection_pool_exhaustion`, Confidence: `0.97`).
-* **Lý do chi tiết**:
-  1. **Dòng sự kiện (Alert Timeline)**: Sự cố khởi phát đầu tiên tại **`payment-svc`** từ lúc `09:42:01` với cảnh báo sử dụng connection pool đạt 85% (`db_connection_pool_used_ratio|warn`), sau đó tăng lên 99% (`crit`) ở `09:42:18`, kéo theo P99 latency vọt lên `1840ms` (`crit`) lúc `09:42:22` và phát sinh cảnh báo lỗi giao dịch `error_rate` (`warn` 0.04) lúc `09:42:30`. Phải mất 44 giây sau (`09:42:45`), `checkout-svc` mới báo latency warn và báo lỗi gọi downstream `downstream_payment_error_rate` lúc `09:43:01` (triệu chứng thụ động từ payment).
-  2. **Thuật toán cải tiến kết hợp đồ thị (Graph + Topology Diff + Severity)**: 
-     * **Original PageRank**: Chuyển sang chạy PageRank trên đồ thị gốc (APM graph) giúp dòng chảy truyền tải điểm số xuôi chiều từ caller xuống callee (đến downstream dependency).
-     * **Topology Diff (`in_degree - out_degree`)**: Xác định `payment-svc` là nút lá gánh lỗi (in-degree = 1, out-degree = 0, hiệu số = +1), trong khi nút trung chuyển `checkout-svc` có hiệu số = -2. Điều này giúp đẩy điểm đồ thị của `payment-svc` lên vị trí số 1 (`0.9648`).
-     * **Lọc mốc thời gian cục bộ**: Sửa lỗi Global Timestamp Bug bằng cách chỉ quét mốc thời gian cảnh báo của các alert thuộc riêng cụm `c-000-000`.
-  3. **Khớp nối lịch sử (RAG)**: LLM truy xuất chính xác sự cố tương đồng nhất là **`INC-2025-11-08`** (rò rỉ kết nối DB của payment-svc). Sự đồng thuận 100% giữa xếp hạng đồ thị cải tiến và RAG lịch sử giúp LLM đưa ra kết luận chuẩn xác tuyệt đối với confidence **`0.97`**.
+* **Thời gian diễn ra:** Từ `2026-06-12T09:42:01Z` đến `2026-06-12T09:46:01Z`
+* **Số lượng alerts:** 15 alerts
+* **Các service liên quan:** `checkout-svc`, `edge-lb`, `payment-svc`, `cart-svc`, `notification-svc`, `recommender-svc`
 
----
+### Kết quả phân tích và lý do xác thực
 
-## Câu hỏi 2: Confidence của bạn — có dám deploy auto-remediation dựa trên output này không?
+* **Root Cause:** `payment-svc`
+* **Phân loại:** `connection_pool_exhaustion`
+* **Confidence:** `0.97`
 
-### Kết quả phân tích & Quyết định
-* **Mức độ tin cậy của đề xuất**: `0.97` (cực kỳ tin cậy).
-* **Quyết định**: **HOÀN TOÀN TỰ TIN để kích hoạt tự động khắc phục (auto-remediation)**, cụ thể là thực hiện **auto-rollback** phiên bản deploy gần nhất của `payment-svc` hoặc **auto-scale/restart pool** kết nối DB.
-* **Lý do**:
-  1. Với điểm số confidence đạt `0.97`, sự đồng nhất thông tin giữa đồ thị APM, dòng thời gian phát sinh lỗi cục bộ, mức độ nghiêm trọng của cảnh báo (`crit`) và tri thức sự cố lịch sử (`INC-2025-11-08`) đạt mức tối đa.
-  2. Rủi ro rollback nhầm dịch vụ nạn nhân (như `checkout-svc` hay `edge-lb`) đã được triệt tiêu hoàn toàn nhờ thuật toán đồ thị gốc cải tiến. Việc tự động rollback `payment-svc` lúc này sẽ giải quyết tận gốc rễ lỗi rò rỉ DB pool, khôi phục hệ thống trong vài giây và giảm thiểu tối đa MTTR.
+#### Lý do
 
----
+1. **Phân tích Alert Timeline**
 
-## Câu hỏi 3: 1 case mà bạn không chắc — vì sao?
+   Em nhận thấy sự cố xuất hiện đầu tiên tại `payment-svc` vào lúc `09:42:01` với cảnh báo sử dụng connection pool đạt 85%. Chỉ sau đó vài giây, tỷ lệ sử dụng pool tăng lên 99%, kéo theo P99 latency tăng lên `1840ms` và phát sinh cảnh báo `error_rate`.
 
-### Kết quả phân tích & Lý do
-* **Trường hợp không chắc chắn**: Cụm `c-001-000` gồm hai dịch vụ `checkout-svc` và `search-svc` xảy ra trong khung giờ `09:46:50` - `09:47:12`.
-* **Lý do chi tiết**:
-  * Dù hệ thống đã sửa lỗi mốc thời gian cục bộ giúp định vị chính xác `checkout-svc` đứng đầu (score 0.70 so với 0.50 của `search-svc`) nhờ trọng số cảnh báo nghiêm trọng (`crit` của checkout vs `warn` của search), sự xuất hiện của `search-svc` trong cụm vẫn mang tính không chắc chắn.
-  * Hai dịch vụ này hoàn toàn rời rạc trong subgraph (không gọi nhau trực tiếp). Cảnh báo trễ DB query của `search-svc` (`a-0016`) thực chất có thể chỉ là một nhiễu nền độc lập (noise) xảy ra đồng thời. Việc gom cụm chung do trùng khít cửa sổ thời gian dễ gây nhiễu luồng điều tra của SRE đối với lỗi `deadlock` chính của `checkout-svc`.
+   Trong khi đó, `checkout-svc` chỉ bắt đầu xuất hiện cảnh báo từ `09:42:45` và báo lỗi downstream payment tại `09:43:01`. Điều này cho thấy các lỗi tại `checkout-svc` là hậu quả của sự cố xảy ra ở `payment-svc`, không phải nguyên nhân gốc.
+
+2. **Phân tích bằng Graph + Topology Diff + Severity**
+
+   Em sử dụng PageRank trên đồ thị APM gốc để giữ nguyên hướng phụ thuộc giữa các service. Đồng thời, em kết hợp thêm chỉ số `Topology Diff (in_degree - out_degree)` để phân biệt service trung gian với service có khả năng là nguồn phát sinh lỗi.
+
+   Kết quả cho thấy `payment-svc` có `in-degree = 1`, `out-degree = 0` và đạt điểm đồ thị cao nhất (`0.9648`), trong khi `checkout-svc` chỉ đóng vai trò trung chuyển. Ngoài ra, em cũng sửa lỗi Global Timestamp Bug bằng cách chỉ phân tích các alert thuộc riêng cluster `c-000-000`.
+
+3. **Đối chiếu với dữ liệu lịch sử (RAG)**
+
+   Hệ thống truy xuất được incident tương đồng nhất là `INC-2025-11-08`, liên quan đến lỗi rò rỉ connection pool tại `payment-svc`. Kết quả truy xuất hoàn toàn trùng khớp với kết quả phân tích đồ thị, giúp em xác định `payment-svc` là root cause với độ tin cậy rất cao.
 
 ---
 
-## Câu hỏi bổ sung: Bạn chọn bonus nào? Nếu KHÔNG chọn -> tại sao retrieval-only đã đủ?
+## Câu hỏi 2: Với confidence hiện tại, em có dám triển khai auto-remediation không?
 
-### Trả lời:
-* **Lựa chọn**: Tôi **KHÔNG** chọn phần bonus sử dụng mô hình Embedding nâng cao (`sentence-transformers` để tính toán độ tương đồng ngữ nghĩa).
-* **Lý do tại sao cách tiếp cận mặc định (retrieval-only dựa trên heuristic so khớp metadata) đã là đầy đủ và tối ưu**:
-  1. **Độ chính xác cao nhờ khớp cấu trúc cứng (Explicit Metadata Match)**: Các trường thông tin của incident lịch sử như `services_involved`, `root_cause_service`, và `severity` đều là dữ liệu có cấu trúc rất tường minh. Thuật toán heuristic so khớp tập hợp (`set intersection` và so khớp chuỗi cứng) cho phép định vị trực tiếp và chính xác 100% sự trùng lặp về dịch vụ và mức độ lỗi. Điều này loại bỏ hoàn toàn hiện tượng "mơ hồ ngữ nghĩa" (semantic drift) vốn là điểm yếu của mô hình vector embeddings khi xử lý các tên dịch vụ kỹ thuật viết tắt.
-  2. **Độ trễ xử lý gần như bằng không (Ultra-low Latency)**: Sử dụng so khớp heuristic chỉ tiêu tốn phép toán logic cơ bản trên RAM, hoàn tất trong thời gian **`< 1ms`**. Trong khi đó, việc sử dụng các mô hình embeddings đòi hỏi tài nguyên CPU/GPU để chạy mô hình suy luận (inference), gây trễ thêm từ `100ms - 300ms` cho mỗi lần truy xuất RAG mà không mang lại giá trị gia tăng đáng kể về mặt kết quả định vị.
-  3. **Tối ưu hóa dependency của ứng dụng (Production-ready footprint)**: Việc không dùng embedding giúp loại bỏ các gói thư viện Python cồng kềnh (`sentence-transformers`, `pytorch`, `transformers`) nặng hàng Gigabyte. Điều này giúp gói build của hệ thống AIOps cực kỳ gọn nhẹ, dễ dàng deploy dưới dạng microservice siêu nhỏ trên Kubernetes mà không cần các node GPU đắt đỏ.
+### Kết quả phân tích
+
+* **Confidence:** `0.97`
+* **Quyết định:** Em tự tin triển khai auto-remediation.
+
+### Hành động đề xuất
+
+* Auto-rollback phiên bản triển khai gần nhất của `payment-svc`.
+* Hoặc tự động scale/restart connection pool liên quan đến database.
+
+### Lý do
+
+Điểm confidence đạt `0.97` và tất cả nguồn bằng chứng từ Alert Timeline, Graph Analysis, Severity Score và RAG đều chỉ về cùng một root cause là `payment-svc`.
+
+Bên cạnh đó, thuật toán đồ thị cải tiến giúp giảm đáng kể nguy cơ rollback nhầm các service bị ảnh hưởng như `checkout-svc` hoặc `edge-lb`. Vì vậy, việc thực hiện remediation trực tiếp trên `payment-svc` có khả năng khôi phục hệ thống nhanh chóng và giảm MTTR.
+
+Tuy nhiên, trong môi trường production thực tế, em vẫn ưu tiên triển khai auto-remediation thông qua các guardrail hoặc cơ chế approval để hạn chế rủi ro từ các trường hợp phân loại sai hiếm gặp.
+
+---
+
+## Câu hỏi 3: Một trường hợp em chưa hoàn toàn chắc chắn và lý do
+
+### Trường hợp
+
+Cluster `c-001-000` gồm hai service `checkout-svc` và `search-svc`, xuất hiện trong khoảng thời gian từ `09:46:50` đến `09:47:12`.
+
+### Lý do
+
+Mặc dù hệ thống xếp hạng `checkout-svc` cao hơn (`0.70` so với `0.50`) nhờ xuất hiện cảnh báo mức `crit`, em vẫn chưa hoàn toàn chắc chắn về vai trò của `search-svc` trong cụm này.
+
+Nguyên nhân là do hai service không có quan hệ phụ thuộc trực tiếp trong topology. Alert liên quan đến truy vấn database chậm của `search-svc` có thể chỉ là một sự kiện nền độc lập xảy ra cùng thời điểm. Việc gom cụm dựa trên cửa sổ thời gian có khả năng tạo nhiễu trong quá trình điều tra và khiến SRE tập trung sai hướng thay vì xử lý lỗi `deadlock` tại `checkout-svc`.
+
+---
+
+## Câu hỏi bổ sung: Em có thực hiện Bonus 3 (LLM Enrichment) không? So sánh kết quả giữa LLM và kNN Top-1, đồng thời rút ra nhận xét từ bài viết *Building Effective Agents*.
+
+### Trả lời
+
+Em **đã thực hiện Bonus 3 – LLM Enrichment**.
+
+### So sánh kết quả giữa LLM và kNN Top-1
+
+| Cluster   | LLM Class                  | kNN Top-1 Class            | Kết quả |
+| --------- | -------------------------- | -------------------------- | ------- |
+| c-000-000 | connection_pool_exhaustion | connection_pool_exhaustion | Khớp    |
+| c-001-000 | deadlock                   | deadlock                   | Khớp    |
+| c-002-000 | connection_pool_exhaustion | connection_pool_exhaustion | Khớp    |
+
+Kết quả cho thấy tất cả các cluster đều có sự đồng nhất hoàn toàn giữa dự đoán của LLM và incident lịch sử được truy xuất từ RAG. Điều này cho thấy dữ liệu retrieval đã cung cấp ngữ cảnh đủ mạnh để hỗ trợ LLM đưa ra kết luận chính xác và hạn chế hiện tượng hallucination.
+
