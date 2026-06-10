@@ -1,39 +1,56 @@
-# SUBMIT: Reflection & EOD Checkpoint
+# BÀN GIAO: Báo cáo Thử nghiệm & Câu hỏi Thu hoạch EOD
 
-## 1. Latency budget (p99) và Phase chiếm thời gian nhất
-- **Latency Budget (p99):** Mục tiêu thiết kế là dưới **5 giây** khi gọi LLM online, và dưới **200ms** khi chạy ở chế độ offline fallback.
-- **Phase chiếm thời gian nhất:** Giai đoạn **Layer 3 (LLM API Call)** chiếm đến **95% - 98%** tổng thời gian phản hồi (khoảng 1 - 3 giây). Điều này là do độ trễ mạng khi gọi API ngoài và thời gian sinh token của LLM. Các thuật toán đồ thị và phân tích logic chạy local chỉ mất khoảng 15 - 50ms.
+## Câu hỏi 1: Latency budget của endpoint bạn là bao nhiêu (p99)? Phase nào chiếm thời gian nhất?
 
----
-
-## 2. So sánh xử lý 5 alerts vs 500 alerts (Đặc tính scale)
-- **Sự khác biệt:** Khi số lượng alert tăng từ 5 lên 500, thời gian tính toán ở Layer 1 (Correlate) và Layer 2 (Graph RCA) sẽ tăng nhẹ (từ ~10ms lên ~150-200ms) vì số lượng phần tử cần gom cụm và kích thước đồ thị con tăng lên.
-- **Quy luật:** Độ trễ **không tăng tuyến tính (linear scale)**. Có một phần **fixed cost** rất lớn (hơn 90% latency) nằm ở cuộc gọi LLM API. Dù đầu vào là 5 hay 500 alerts, danh sách ứng cử viên gửi sang LLM vẫn được giới hạn (tối đa top 5 candidates và top 3 incident history), giúp thời gian xử lý của LLM ổn định. Do đó, hệ thống thể hiện đặc tính có fixed cost cao và tăng chậm khi dữ liệu lớn.
+### Trả lời:
+- **Ngân sách độ trễ (Latency Budget p99):** Mục tiêu thiết kế cho endpoint `/incident` của em là dưới **5 giây** khi chạy ở chế độ Online (gọi LLM) và dưới **200ms** khi chạy ở chế độ Offline (không dùng LLM).
+- **Phase chiếm thời gian nhất:** Giai đoạn **Layer 3 (LLM API Call)** chiếm đến **95% - 98%** tổng thời gian phản hồi (dao động từ 1 - 3 giây). Nguyên nhân là do đây là cuộc gọi mạng I/O-bound ra ngoài internet và phụ thuộc trực tiếp vào tốc độ sinh token của LLM. Các giai đoạn tính toán thuật toán đồ thị cục bộ (Local Graph) của em chỉ chiếm khoảng 15 - 50ms (dưới 5%).
 
 ---
 
-## 3. Ứng phó khi LLM provider down giữa buổi demo
-- **Cách hoạt động:** File `rca.py` đã bọc toàn bộ LLM call trong khối `try-except`. Khi LLM provider lỗi hoặc timeout:
-  1. Hệ thống tự động bắt lỗi và ghi nhận lỗi vào Prometheus metric `aiops_llm_failures_total`.
-  2. Hệ thống chuyển sang chế độ **Graph+Retrieval Fallback Mode** (sử dụng độ phân giải từ PageRank kết hợp đối sánh độ tương đồng với lịch sử sự cố `incidents_history.json`).
-  3. API vẫn phản hồi thành công với mã **HTTP 200** và trả về Incident Report có độ chính xác cao dựa trên dữ liệu lịch sử và đồ thị, chỉ thay đổi phương thức chuẩn đoán thành `graph+retrieval` hoặc `graph-only-llm-failed`.
+## Câu hỏi 2: Endpoint của bạn xử lý 1 input với 5 alert vs 500 alert — sự khác biệt latency là gì? Linear scale? Hay có phần fixed cost?
+
+### Trả lời:
+- **Sự khác biệt về độ trễ:** 
+  - Khi tăng lượng cảnh báo đầu vào từ 5 lên 500, thời gian thực thi của Layer 1 (Gom cụm) và Layer 2 (RCA đồ thị) của em sẽ tăng nhẹ (từ ~10ms lên khoảng ~150-200ms) do NetworkX phải duyệt và tính toán PageRank trên một tập đồ thị con lớn hơn.
+  - Tuy nhiên, độ trễ tổng thể của API **không tăng tuyến tính (linear scale)**. 
+- **Đặc tính Fixed Cost:**
+  - Hệ thống của em chịu ảnh hưởng bởi một khoản **chi phí cố định (fixed cost)** rất lớn từ cuộc gọi LLM API ở Layer 3. Vì danh sách ứng cử viên gửi đi LLM luôn được em giới hạn (tối đa top 5 dịch vụ lỗi và top 3 incident lịch sử), thời gian xử lý của LLM gần như giữ nguyên cho dù dữ liệu thô ban đầu có là 5 hay 500 alert. Do đó, hệ thống thể hiện đặc tính tăng trưởng chậm (sub-linear) nhờ vào chi phí cố định lớn của LLM.
 
 ---
 
-## 4. Phân biệt `/healthz` và `/readyz`
-- **`/healthz` (Liveness Probe):**
-  - **Mục đích:** Kiểm tra xem tiến trình FastAPI có đang sống và phản hồi hay không. 
-  - **Cách hoạt động:** Chỉ trả về nhanh `{"status": "ok"}` mà không thực hiện kết nối mạng hoặc truy vấn dữ liệu nặng.
-  - **Sử dụng:** Kubernetes dùng endpoint này để quyết định có restart (khởi động lại) Pod khi tiến trình bị treo cứng hay không.
-- **`/readyz` (Readiness Probe):**
-  - **Mục đích:** Kiểm tra xem ứng dụng đã sẵn sàng xử lý request thực tế hay chưa.
-  - **Cách hoạt động:** Kiểm tra xem đồ thị topo (`services.json`) và lịch sử sự cố (`incidents_history.json`) đã load vào bộ nhớ thành công chưa, và kiểm tra kết nối tới LLM API.
-  - **Sử dụng:** Kubernetes dùng endpoint này để quyết định có chuyển traffic từ load balancer vào Pod hay không (nếu `/readyz` fail, Pod sẽ bị tạm dừng nhận traffic nhưng không bị restart).
+## Câu hỏi 3: LLM provider down giữa demo. Hệ thống bạn behave thế nào? Phương án dự phòng?
+
+### Trả lời:
+- **Cách thức hoạt động của hệ thống:**
+  - Toàn bộ hàm gọi LLM (`call_llm_rca` trong `rca.py`) được em bao bọc chặt chẽ trong khối lệnh `try-except`.
+  - Nếu nhà cung cấp dịch vụ LLM bị sập hoặc trả về lỗi, hệ thống của em sẽ tự động bắt ngoại lệ này, tăng giá trị của Prometheus metric `aiops_llm_failures_total` để cảnh báo hệ thống giám sát.
+- **Phương án dự phòng (Fallback):**
+  - Hệ thống của em ngay lập tức chuyển sang chế độ **Graph+Retrieval Fallback Mode**. 
+  - Tại đây, hệ thống sử dụng kết quả thuật toán PageRank trên đồ thị để tìm ra dịch vụ có điểm số cao nhất, kết hợp đối sánh độ tương đồng RAG với cơ sở dữ liệu lịch sử sự cố (`incidents_history.json`).
+  - Kết quả API trả về vẫn là **HTTP 200** với chẩn đoán sự cố đầy đủ và phương thức RCA được ghi nhận là `graph-only-llm-failed` hoặc `graph+retrieval` thay vì trả lỗi HTTP 500 gây sập hệ thống.
 
 ---
 
-## 5. Đánh giá khi Trainer POST đồng thời 4 requests từ 4 nhóm
-- **Khả năng xử lý:** Endpoint handle ổn định nhờ vào tính năng **Asynchronous (async/await)** của FastAPI và các thư viện hỗ trợ. Trong lúc chờ I/O từ LLM call của request 1, event loop của FastAPI sẽ chuyển qua xử lý CPU/IO cho request 2, 3, 4 một cách mượt mà.
-- **Bottleneck đầu tiên:**
-  - **Với Online Mode (gọi LLM):** Bottleneck đầu tiên sẽ là **Rate Limit (TPM/RPM)** của OpenAI API key. Nếu vượt quá giới hạn lượt gọi đồng thời từ LLM provider, API sẽ trả về lỗi 429 hoặc bị nghẽn mạng.
-  - **Với Offline Mode (fallback):** Bottleneck sẽ là **CPU** của luồng chính khi chạy thuật toán PageRank và gom cụm đồ thị trên NetworkX, do Python bị giới hạn bởi GIL (Global Interpreter Lock) trên 1 tiến trình đơn lẻ. Chúng ta giải quyết điều này ở production bằng cách chạy nhiều worker (`--workers 4` hoặc deploy nhiều replica pods).
+## Câu hỏi 4: /healthz và /readyz khác nhau gì? Khi nào dùng cái nào?
+
+### Trả lời:
+- **Endpoint `/healthz` (Liveness Probe - Kiểm tra sự sống):**
+  - **Mục đích:** Xác minh xem tiến trình ứng dụng FastAPI/Uvicorn của em có đang chạy bình thường hay bị treo cứng (deadlock).
+  - **Đặc điểm:** Chỉ trả về nhanh `{"status": "ok"}` mà không thực hiện kết nối mạng hoặc truy vấn dữ liệu nặng để tránh tạo tải giả.
+  - **Khi nào dùng:** Kubernetes dùng nó để tự động khởi động lại (restart) container của em nếu endpoint này ngừng phản hồi.
+- **Endpoint `/readyz` (Readiness Probe - Kiểm tra độ sẵn sàng):**
+  - **Mục đích:** Xác minh xem ứng dụng của em đã sẵn sàng nhận và xử lý traffic thực tế từ người dùng hay chưa.
+  - **Đặc điểm:** Thực hiện kiểm tra trạng thái nạp dữ liệu đồ thị topo (`services.json`), cơ sở dữ liệu incidents lịch sử, và kiểm tra kết nối mạng tới LLM (nếu bật cờ sử dụng LLM).
+  - **Khi nào dùng:** Kubernetes dùng nó để quyết định có đưa container của em vào cụm Load Balancer hay không. Nếu `/readyz` trả lỗi (ví dụ: HTTP 503), Kubernetes sẽ tạm thời ngắt container khỏi luồng traffic nhưng không restart nó.
+
+---
+
+## Câu hỏi 5: Trainer POST 4 request đồng thời từ 4 nhóm khác nhau. Endpoint bạn handle ổn không? Bottleneck đầu tiên?
+
+### Trả lời:
+- **Khả năng xử lý của hệ thống:**
+  - Endpoint của em hoạt động **rất ổn định** dưới 4 request đồng thời nhờ vào kiến trúc không đồng bộ **Async/Await** của FastAPI. Khi request 1 đang đợi phản hồi I/O từ LLM API, Event Loop của FastAPI sẽ ngay lập tức nhường quyền kiểm soát để xử lý CPU hoặc gọi I/O cho request 2, 3, 4.
+- **Điểm nghẽn (Bottleneck) đầu tiên:**
+  - **Chế độ Online (sử dụng LLM):** Điểm nghẽn đầu tiên sẽ là **Rate Limit (TPM - Token Per Minute / RPM - Request Per Minute)** của tài khoản API LLM. Nếu vượt ngưỡng này, LLM provider sẽ trả về lỗi `429 Too Many Requests`.
+  - **Chế độ Offline (fallback không LLM):** Điểm nghẽn sẽ là **CPU** của luồng chính khi chạy thuật toán PageRank và gom cụm đồ thị trên NetworkX, do Python bị giới hạn bởi GIL (Global Interpreter Lock). Cách giải quyết trên Production của em là triển khai nhiều worker thông qua Uvicorn (`--workers 4`) hoặc nhân bản thêm Pods trên Kubernetes.
