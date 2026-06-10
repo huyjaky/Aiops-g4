@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<!-- saved from url=(0079)https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/ -->
+<html lang="en" dir="auto"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name="robots" content="noindex, nofollow"><title>W2-D3: Model Serving — Đưa Pipeline Lên Production | My Learning Notes</title>
+<meta name="keywords" content=""><meta name="description" content="Model Serving — Đưa Pipeline Lên Production D1 + D2 cho bạn 2 layer chạy được trong notebook. Notebook không phải production. Hôm nay biến nó thành API service mà 1 hệ thống monitoring có thể POST alert vào và nhận lại incident report.
+Khi nói “serving” trong AIOps, không chỉ về serve ML model — nó là về serve toàn bộ pipeline (correlation + RCA + LLM call) như 1 unit có:"><meta name="author" content="khanhnn"><link rel="canonical" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/"><link crossorigin="anonymous" href="https://khanhnn00.github.io/learning-notes/assets/css/stylesheet.3e05410ef2df20021895e22e481ff8638e68304e63533c898839608ef572a304.css" integrity="sha256-PgVBDvLfIAIYleIuSB/4Y45oME5jUzyJiDlgjvVyowQ=" rel="preload stylesheet" as="style"><link rel="icon" href="https://khanhnn00.github.io/learning-notes/assets/favicon.ico"><link rel="icon" type="image/png" sizes="16x16" href="https://khanhnn00.github.io/learning-notes/assets/favicon-16x16.png"><link rel="icon" type="image/png" sizes="32x32" href="https://khanhnn00.github.io/learning-notes/assets/favicon-32x32.png"><link rel="apple-touch-icon" href="https://khanhnn00.github.io/learning-notes/assets/apple-touch-icon.png"><link rel="mask-icon" href="https://khanhnn00.github.io/learning-notes/assets/safari-pinned-tab.svg"><meta name="theme-color" content="#2e2e33"><meta name="msapplication-TileColor" content="#2e2e33"><link rel="alternate" hreflang="en" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/"><noscript><style>#theme-toggle,.top-link{display:none}</style></noscript><link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="./W2-D3_ Model Serving — Đưa Pipeline Lên Production _ My Learning Notes_files/css2" rel="stylesheet"><script type="text/javascript" async="" src="./W2-D3_ Model Serving — Đưa Pipeline Lên Production _ My Learning Notes_files/tex-mml-chtml.js"></script><script>MathJax={tex:{displayMath:[["\\[","\\]"],["$$","$$"]],inlineMath:[["\\(","\\)"],["$","$"]],packages:{"[+]":["base"]},processEscapes:!0,processEnvironments:!0,skipTags:["script","noscript","style","textarea","pre"],TeX:{equationNumbers:{autoNumber:"AMS"},extensions:["AMSmath.js","AMSsymbols.js"]},macros:{br:"\\\\"}}}</script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-RLQ7H9EKNJ"></script><script>var doNotTrack=!1;if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-RLQ7H9EKNJ",{anonymize_ip:!1})}</script><meta property="og:image" content=""><meta name="twitter:card" content="summary"><meta name="twitter:title" content="W2-D3: Model Serving — Đưa Pipeline Lên Production"><meta name="twitter:description" content="Model Serving — Đưa Pipeline Lên Production D1 + D2 cho bạn 2 layer chạy được trong notebook. Notebook không phải production. Hôm nay biến nó thành API service mà 1 hệ thống monitoring có thể POST alert vào và nhận lại incident report.
+Khi nói “serving” trong AIOps, không chỉ về serve ML model — nó là về serve toàn bộ pipeline (correlation + RCA + LLM call) như 1 unit có:"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"XBrain","item":"https://khanhnn00.github.io/learning-notes/xbrain/"},{"@type":"ListItem","position":2,"name":"AIOps W2 — RCA \u0026 Smart Response","item":"https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/"},{"@type":"ListItem","position":3,"name":"W2-D3: Model Serving — Đưa Pipeline Lên Production","item":"https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"W2-D3: Model Serving — Đưa Pipeline Lên Production","name":"W2-D3: Model Serving — Đưa Pipeline Lên Production","description":"Model Serving — Đưa Pipeline Lên Production D1 + D2 cho bạn 2 layer chạy được trong notebook. Notebook không phải production. Hôm nay biến nó thành API service mà 1 hệ thống monitoring có thể POST alert vào và nhận lại incident report.\nKhi nói \u0026ldquo;serving\u0026rdquo; trong AIOps, không chỉ về serve ML model — nó là về serve toàn bộ pipeline (correlation + RCA + LLM call) như 1 unit có:","keywords":[],"articleBody":"Model Serving — Đưa Pipeline Lên Production D1 + D2 cho bạn 2 layer chạy được trong notebook. Notebook không phải production. Hôm nay biến nó thành API service mà 1 hệ thống monitoring có thể POST alert vào và nhận lại incident report.\nKhi nói “serving” trong AIOps, không chỉ về serve ML model — nó là về serve toàn bộ pipeline (correlation + RCA + LLM call) như 1 unit có:\nHTTP endpoint Latency budget Health check Versioning + rollback Monitoring của chính bản thân nó Cuối ngày bạn có serve.py chạy được, đó là Layer 4 của lab Friday.\nRule of thumb: Pipeline trong notebook khác với pipeline production ở 3 thứ — concurrency, failure handling, và observability. Đừng đợi production để nghĩ về 3 thứ này.\n1. Framework — FastAPI vs Flask vs BentoML 3 framework phổ biến cho Python serving. Tóm gọn:\nFramework Khi nào dùng Ưu Nhược Flask Quick prototype, học Simple, ít magic Sync only (cần workaround cho async), không validate input native FastAPI Production API, mixed workload Async, Pydantic validation, OpenAPI auto, type hints Magic hơn Flask một chút BentoML ML model–centric Model versioning, batching native, Yatai deploy Học curve, overhead cho non-ML workload Cho lab W2 dùng FastAPI. Lý do: pipeline có LLM call (IO bound, hưởng từ async), input có schema (Pydantic dễ), trainer test bằng curl/requests (OpenAPI giúp document).\nuv pip install fastapi uvicorn pydantic 2. Endpoint cơ bản 2.1 Skeleton # serve.py from fastapi import FastAPI, HTTPException from pydantic import BaseModel, Field from typing import Optional import logging logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s') logger = logging.getLogger('aiops') app = FastAPI( title='AIOps Incident Pipeline', version='1.0.0', description='Group lab W2 — correlate alerts → RCA → suggest action', ) # Pydantic schema — input validation class Alert(BaseModel): id: str ts: str service: str metric: str severity: str value: float threshold: float labels: Optional[dict] = Field(default_factory=dict) class IncidentRequest(BaseModel): alerts: list[Alert] # Output schema (match W2_lab_spec.md Section 4) class Cluster(BaseModel): cluster_id: str alert_count: int services: list[str] time_range: list[str] class RootCause(BaseModel): service: str confidence: float reasoning: str class SimilarIncident(BaseModel): id: str similarity: float summary: str class IncidentResponse(BaseModel): clusters: list[Cluster] root_cause: RootCause recommended_actions: list[str] similar_incidents: list[SimilarIncident] @app.get('/healthz') def healthz() -\u003e dict: return {'status': 'ok'} @app.post('/incident', response_model=IncidentResponse) def post_incident(req: IncidentRequest) -\u003e IncidentResponse: \"\"\" Process batch of alerts → return incident report. Chain: correlate (L1) → rca (L2) → enrich w/ LLM (L3) → assemble response. \"\"\" logger.info(f\"Received {len(req.alerts)} alerts\") if not req.alerts: raise HTTPException(status_code=400, detail='Empty alert list') # ... pipeline calls go here ... # Stub: return IncidentResponse( clusters=[], root_cause=RootCause(service='unknown', confidence=0.0, reasoning='not implemented'), recommended_actions=[], similar_incidents=[], ) Chạy:\nuvicorn serve:app --host 0.0.0.0 --port 8000 --reload Test:\ncurl http://localhost:8000/healthz # {\"status\":\"ok\"} curl -X POST http://localhost:8000/incident \\ -H \"Content-Type: application/json\" \\ -d '{\"alerts\":[{\"id\":\"a-1\",\"ts\":\"2026-06-12T09:42:01Z\",\"service\":\"payment-svc\",\"metric\":\"latency_p99_ms\",\"severity\":\"crit\",\"value\":1840,\"threshold\":800}]}' 2.2 Pydantic validation — không phải optional Nếu input sai format (e.g. missing service field), Pydantic auto trả 422 với detail. Không cần code thêm.\n$ curl -X POST http://localhost:8000/incident -H \"Content-Type: application/json\" \\ -d '{\"alerts\":[{\"id\":\"a-1\"}]}' # 422 Unprocessable Entity # {\"detail\":[{\"loc\":[\"body\",\"alerts\",0,\"ts\"],\"msg\":\"field required\",\"type\":\"value_error.missing\"}, ...]} Trainer test sẽ kiểm tra cả happy path lẫn malformed input. Đảm bảo endpoint không trả 500 khi input sai.\n3. Chain 3 Layer Lại Pipeline assembly — gọi correlate.py → rca.py → enrich.py:\n# pipeline.py — glue layer from correlate import correlate, build_graph_from_json from rca import run_rca from enrich import call_llm_action_suggest # team L3 code import json from pathlib import Path # Load once at module level (cached) GRAPH = build_graph_from_json('lab/dataset/services.json') HISTORY = json.loads(Path('lab/dataset/incidents_history.json').read_text())['incidents'] def process_batch(alerts: list[dict]) -\u003e dict: \"\"\" Full pipeline. Trả về dict matching IncidentResponse schema. \"\"\" # L1: Correlate clusters = correlate(alerts, GRAPH, gap_sec=120, max_hop=2) if not clusters: return { 'clusters': [], 'root_cause': {'service': 'unknown', 'confidence': 0, 'reasoning': 'No clusters'}, 'recommended_actions': [], 'similar_incidents': [], } # Pick largest cluster as \"primary incident\" primary = max(clusters, key=lambda c: c['alert_count']) # L2 + L3: RCA + LLM enrichment cho primary cluster rca_result = run_rca(primary, alerts, GRAPH, HISTORY) # Assemble response return { 'clusters': [ { 'cluster_id': c['cluster_id'], 'alert_count': c['alert_count'], 'services': c['services'], 'time_range': c['time_range'], } for c in clusters ], 'root_cause': { 'service': rca_result['root_cause'], 'confidence': rca_result['confidence'], 'reasoning': rca_result.get('reasoning', ''), }, 'recommended_actions': rca_result.get('actions', []), 'similar_incidents': [ {'id': inc_id, 'similarity': 0.7, 'summary': '...'} # populate từ history for inc_id in rca_result.get('similar_incidents', [])[:3] ], } Sau đó cập nhật serve.py:\nfrom pipeline import process_batch @app.post('/incident', response_model=IncidentResponse) def post_incident(req: IncidentRequest) -\u003e IncidentResponse: alerts_dict = [a.model_dump() for a in req.alerts] try: result = process_batch(alerts_dict) except Exception as e: logger.error(f\"Pipeline failed: {e}\", exc_info=True) raise HTTPException(status_code=500, detail=f'Pipeline error: {e}') return IncidentResponse(**result) 4. Latency Budget 4.1 Đo trước, optimize sau Add middleware đo latency mỗi request:\nimport time from fastapi import Request @app.middleware('http') async def add_timing(request: Request, call_next): start = time.perf_counter() response = await call_next(request) duration_ms = (time.perf_counter() - start) * 1000 response.headers['X-Response-Time-Ms'] = f'{duration_ms:.1f}' logger.info(f\"{request.method} {request.url.path} {response.status_code} {duration_ms:.0f}ms\") return response Trên scenario chính (200 alert), latency breakdown thường:\nPhase Time % Pydantic parse + validate 5-10ms 0.2% Layer 1 correlate (Python loops) 50-100ms 2% Layer 2 graph RCA 20-50ms 1% Layer 3 LLM call (network) 3-8s 95-97% Response serialize 5-10ms 0.2% Total 3.5-8.5s LLM call dominate. Tối ưu 100ms ở L1/L2 = 1% improvement. Tối ưu LLM = lớn.\n4.2 Optimization cho LLM call Cache — same prompt → cached response (hash prompt):\nfrom functools import lru_cache import hashlib _llm_cache: dict[str, dict] = {} def cached_llm_call(prompt: str) -\u003e dict: key = hashlib.sha256(prompt.encode()).hexdigest() if key not in _llm_cache: _llm_cache[key] = _do_llm_call(prompt) return _llm_cache[key] Cảnh báo: cache không clear → memory grow. Dùng cachetools.TTLCache(maxsize=1000, ttl=3600).\nAsync + concurrent — nếu cần gọi LLM cho 3 cluster, gọi 3 song song thay vì sequential:\nimport asyncio async def llm_call_async(prompt: str) -\u003e dict: # Use openai async client ... @app.post('/incident') async def post_incident(req: IncidentRequest): ... tasks = [llm_call_async(p) for p in prompts] results = await asyncio.gather(*tasks) Smaller model — gpt-4o-mini thay gpt-4o, hoặc gemini-flash. 5x cheap + 2x faster.\nSkip LLM — nếu graph RCA confidence ≥ 0.9, không cần LLM enrichment.\n4.3 Timeout Set timeout cho mọi outbound call:\nfrom openai import OpenAI client = OpenAI(timeout=10.0, max_retries=2) # 10s timeout, 2 retry # Hoặc với requests: # requests.post(url, json=..., timeout=(3, 10)) # connect=3s, read=10s Không timeout → 1 LLM call hang → endpoint hang forever → trainer demo fail.\n5. Concurrency 5.1 1 worker vs N worker Default uvicorn serve:app chạy 1 worker. 1 worker = 1 process xử lý request sequential (cho sync code) hoặc concurrent với event loop (cho async code).\nĐể scale cho production, dùng nhiều worker:\nuvicorn serve:app --host 0.0.0.0 --port 8000 --workers 4 Khi 4 worker, request được load balance round-robin. Trade-off: nhiều worker → nhiều memory (process duplicate state).\n5.2 Race condition với shared state Nếu pipeline có in-memory cache (e.g. dedup fingerprint store) + nhiều worker → mỗi worker có copy riêng → dedup không cross-worker.\nSolution: stateless — mỗi request load state từ Redis hoặc DB. Hoặc giữ stateless trong lab (chấp nhận limitation, document trong reflection).\nLab này chấp nhận stateless / single-worker — không phải production scale exercise. Quan trọng là biết trade-off, không phải implement perfect.\n5.3 Concurrent test Test endpoint chịu được concurrent request:\n# Apache Bench: 100 request, 10 concurrent ab -n 100 -c 10 -p alerts.json -T application/json http://localhost:8000/incident # wrk: 10 thread, 30s wrk -t10 -c50 -d30s --script post.lua http://localhost:8000/incident Theo dõi p50 / p99 + error rate. Nếu p99 \u003e 30s hoặc error \u003e 1% → cần fix.\n6. Health Check + Readiness /healthz (section 2) đủ cho liveness. Cho readiness (k8s rolling deploy), thêm:\n@app.get('/readyz') def readyz() -\u003e dict: \"\"\"Check downstream dependencies. Trả 503 nếu chưa ready.\"\"\" checks = {} # Check graph loaded checks['graph'] = GRAPH.number_of_nodes() \u003e 0 # Check history loaded checks['history'] = len(HISTORY) \u003e 0 # Check LLM API (optional, có thể skip để readiness không depend external) try: # quick model list call from openai import OpenAI OpenAI(timeout=2.0).models.list() checks['llm'] = True except Exception: checks['llm'] = False if not all(checks.values()): raise HTTPException(status_code=503, detail=checks) return {'status': 'ready', 'checks': checks} Lý do tách /healthz vs /readyz:\nhealthz = process còn sống (k8s restart pod nếu fail). Không depend external. readyz = sẵn sàng nhận traffic (k8s remove from load balancer nếu fail). Depend external. 7. Versioning + Rollback 7.1 Version trong response APP_VERSION = '1.0.0' @app.get('/version') def version() -\u003e dict: return { 'app': APP_VERSION, 'pipeline_config': { 'correlate_gap_sec': 120, 'correlate_max_hop': 2, 'rca_method': 'graph+llm', 'llm_model': 'gpt-4o-mini', }, } Trainer hỏi “version code bạn deploy” → bạn có endpoint trả lời.\n7.2 Feature flag cho LLM import os USE_LLM = os.environ.get('AIOPS_USE_LLM', 'true').lower() == 'true' def run_rca_with_flag(cluster, alerts, graph, history): if not USE_LLM: # Skip LLM, return graph-only result candidates = rca_combined(cluster, alerts, graph) return { 'root_cause': candidates[0][0], 'confidence': candidates[0][1], 'method': 'graph-only-flag-off', ... } return run_rca(cluster, alerts, graph, history) Khi LLM provider outage, set AIOPS_USE_LLM=false + restart → endpoint vẫn chạy với graph only.\n7.3 Shadow deployment (concept) Production AIOps: deploy v2 cùng v1, nhưng v2 không serve traffic — nó shadow v1 (nhận cùng input, log output). So sánh v2 output với v1 output trên data thật. Nếu OK trong 1 tuần → promote v2.\nKhông implement trong lab (out of scope). Đề cập để biết direction. Trong vấn đáp, biết khái niệm → +1 điểm Layer 4.\n8. Self-Monitoring Pipeline AIOps monitor production — nhưng bản thân nó cũng cần monitor.\n8.1 Metric Prometheus from prometheus_client import Counter, Histogram, make_asgi_app # Metrics REQUEST_COUNT = Counter('aiops_incident_requests_total', 'Total incident requests', ['status']) REQUEST_LATENCY = Histogram('aiops_incident_latency_seconds', 'Incident pipeline latency') LLM_FAILURES = Counter('aiops_llm_failures_total', 'LLM call failures', ['reason']) CLUSTER_COUNT = Histogram('aiops_clusters_per_request', 'Clusters produced per request') # Mount Prometheus app on /metrics app.mount('/metrics', make_asgi_app()) # Use in endpoint @app.post('/incident') async def post_incident(req: IncidentRequest): with REQUEST_LATENCY.time(): try: result = process_batch([a.model_dump() for a in req.alerts]) REQUEST_COUNT.labels(status='success').inc() CLUSTER_COUNT.observe(len(result['clusters'])) return IncidentResponse(**result) except Exception as e: REQUEST_COUNT.labels(status='error').inc() raise 8.2 Key SLO cho AIOps pipeline SLO Target Why Availability 99.5% Pipeline down → no incident triage p99 latency \u003c 10s Người dùng (SRE) chờ \u003c 10s LLM failure rate \u003c 1% Higher → suspect provider issue Root-cause precision (offline) \u003e 70% top-3 Lower → pipeline làm noise thay vì help 8.3 Logging Structured log (JSON), không print:\nimport logging import json class JsonFormatter(logging.Formatter): def format(self, record): log_obj = { 'ts': self.formatTime(record), 'level': record.levelname, 'msg': record.getMessage(), 'logger': record.name, } if hasattr(record, 'extra'): log_obj.update(record.extra) return json.dumps(log_obj) handler = logging.StreamHandler() handler.setFormatter(JsonFormatter()) logger = logging.getLogger('aiops') logger.addHandler(handler) logger.setLevel(logging.INFO) # Use: logger.info('Processed incident', extra={'extra': { 'cluster_count': 3, 'root_cause': 'payment-svc', 'confidence': 0.84, }}) JSON log dễ ship vào ELK/Loki, query bằng cluster_count \u003e 5 thay vì grep.\n9. Testing Lab chấm tests/ là optional nhưng nâng điểm. Test pyramid cho pipeline:\n9.1 Unit test — pure function # tests/test_correlate.py import pytest from correlate import fingerprint, session_groups def test_fingerprint_excludes_timestamp(): a = {'service': 'payment-svc', 'metric': 'latency', 'severity': 'crit', 'ts': '2026-06-12T09:42:01Z', 'value': 1840} b = {'service': 'payment-svc', 'metric': 'latency', 'severity': 'crit', 'ts': '2026-06-12T09:42:30Z', 'value': 1900} assert fingerprint(a) == fingerprint(b) def test_session_split_on_gap(): alerts = [ {'id': '1', 'ts': '2026-06-12T09:42:00Z', 'service': 'a', 'metric': 'm', 'severity': 'warn', 'value': 1, 'threshold': 0}, {'id': '2', 'ts': '2026-06-12T09:42:30Z', 'service': 'a', 'metric': 'm', 'severity': 'warn', 'value': 1, 'threshold': 0}, {'id': '3', 'ts': '2026-06-12T09:50:00Z', 'service': 'a', 'metric': 'm', 'severity': 'warn', 'value': 1, 'threshold': 0}, ] groups = session_groups(alerts, gap_sec=120) assert len(groups) == 2 # 1 + 2 split bởi 7.5 phút gap 9.2 Integration test — endpoint # tests/test_serve.py from fastapi.testclient import TestClient from serve import app client = TestClient(app) def test_healthz(): r = client.get('/healthz') assert r.status_code == 200 assert r.json() == {'status': 'ok'} def test_incident_empty_alerts(): r = client.post('/incident', json={'alerts': []}) assert r.status_code == 400 # empty list rejected def test_incident_happy_path(): payload = {'alerts': [ {'id': 'a-1', 'ts': '2026-06-12T09:42:01Z', 'service': 'payment-svc', 'metric': 'latency_p99_ms', 'severity': 'crit', 'value': 1840, 'threshold': 800}, ]} r = client.post('/incident', json=payload) assert r.status_code == 200 body = r.json() assert 'clusters' in body assert 'root_cause' in body uv run pytest -v chạy trong \u003c 2s nếu mock LLM call.\n9.3 Mock LLM trong test from unittest.mock import patch @patch('pipeline.call_llm_rca') def test_pipeline_with_mock_llm(mock_llm): mock_llm.return_value = { 'root_cause': 'payment-svc', 'class': 'connection_pool_exhaustion', 'confidence': 0.84, 'actions': ['Rollback'], 'reasoning': 'mocked', 'similar_incidents': ['INC-2025-11-08'], } # ... test pipeline ... Mock LLM trong test OK. Mock LLM trong demo Friday = cap 3 (xem barem).\n10. Deploy Local — Make it run 10.1 requirements.txt fastapi\u003e=0.110 uvicorn[standard]\u003e=0.27 pydantic\u003e=2.5 networkx\u003e=3.2 pandas\u003e=2.0 openai\u003e=1.10 prometheus-client\u003e=0.19 pytest\u003e=7.4 10.2 Makefile (optional, nâng điểm Project Running) .PHONY: install run test clean install: uv pip install -r requirements.txt run: uvicorn serve:app --host 0.0.0.0 --port 8000 --reload run-prod: uvicorn serve:app --host 0.0.0.0 --port 8000 --workers 4 --no-access-log test: pytest -v tests/ clean: find . -name \"__pycache__\" -exec rm -rf {} + rm -f rca_llm_trace.log 10.3 Dockerfile (nâng cao) FROM python:3.11-slim WORKDIR /app COPY requirements.txt . RUN pip install --no-cache-dir -r requirements.txt COPY . . EXPOSE 8000 CMD [\"uvicorn\", \"serve:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\", \"--workers\", \"2\"] docker build -t aiops-pipeline:1.0 . docker run -p 8000:8000 -e OPENAI_API_KEY=$OPENAI_API_KEY aiops-pipeline:1.0 Không bắt buộc. Có Dockerfile + chạy được → notable trong demo.\n11. Embedded Exercise Task: Code serve.py + DESIGN.md cho lab.\nQuy ước nộp bài:\nBranch main Path: aiops-/w2/d3/ (lowercase w2 + d3) File: serve.py + DESIGN.md (HOA) + SUBMIT.md (HOA) Tên file chính xác như trên — không phải app.py, architecture.md, hoặc adr_001.md. Sai naming = 1 điểm. 11.1 Steps Tạo aiops-/w2/d3/ Build skeleton serve.py theo section 2-3 Add health/ready endpoints (section 6) Add latency middleware (section 4.1) Tích hợp với D1 correlate + D2 RCA (giả lập tạm — không cần chính xác, chỉ cần wire) Write DESIGN.md ≥ 100 từ: Pipeline architecture trong endpoint Latency budget breakdown 1 production concern (concurrency hoặc fault tolerance) — bạn handle thế nào Trade-off: vì sao chọn FastAPI thay vì Flask/BentoML Write SUBMIT.md với reflection 11.2 Acceptance serve.py chạy với uvicorn serve:app --port 8000 curl /healthz trả {\"status\":\"ok\"} curl POST /incident với valid input trả 200, body có clusters, root_cause, recommended_actions Invalid input → 422, không 500 DESIGN.md ≥ 100 từ, có concrete decision (e.g. “chọn gap_sec=120s vì…”) 12. EOD Checkpoint Trong SUBMIT.md:\nLatency budget của endpoint bạn là bao nhiêu (p99)? Phase nào chiếm thời gian nhất? Endpoint của bạn xử lý 1 input với 5 alert vs 500 alert — sự khác biệt latency là gì? Linear scale? Hay có phần fixed cost? LLM provider down giữa demo. Hệ thống bạn behave thế nào? Phương án dự phòng? /healthz và /readyz khác nhau gì? Khi nào dùng cái nào? Trainer POST 4 request đồng thời từ 4 nhóm khác nhau. Endpoint bạn handle ổn không? Bottleneck đầu tiên? Câu 3 + 5 sẽ được hỏi lại trong vấn đáp Friday cho Layer 4 owner. Suy nghĩ sẵn.\n13. Resources FastAPI: https://fastapi.tiangolo.com/tutorial/ — đọc 5 phần đầu là đủ cho lab Pydantic v2: https://docs.pydantic.dev/latest/concepts/models/ “Patterns of Distributed Systems” — Unmesh Joshi (Manning). Chapter về Health Check + Heartbeat. Prometheus client Python: https://github.com/prometheus/client_python uvicorn deployment best practices: https://www.uvicorn.org/deployment/ 14. Sang Friday Bạn đã có đủ skill:\nD1: correlate alerts → clusters D2: graph + LLM → root cause + action D3: serve nó qua HTTP endpoint Friday lab kết hợp tất cả + thêm 1 thứ nhỏ — incident history retrieval cho LLM context. Code base bạn build trong 3 ngày sẽ được copy sang aiops-group-{N}/w2/ và team-up theo role (Correlator / RCA / LLM / Platform).\nChuẩn bị tinh thần: trainer sẽ hỏi cá nhân về layer bạn owned. Đọc lại 3 SUBMIT.md tuần này — câu nào bạn viết chưa thoả → viết lại + suy nghĩ thêm.\n","wordCount":"2544","inLanguage":"en","datePublished":"2026-06-07T00:00:00+07:00","dateModified":"2026-06-07T17:33:03Z","author":{"@type":"Person","name":"khanhnn"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/"},"publisher":{"@type":"Organization","name":"My Learning Notes","logo":{"@type":"ImageObject","url":"https://khanhnn00.github.io/learning-notes/assets/favicon.ico"}}}</script><meta name="robots" content="noindex, nofollow"><link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="./W2-D3_ Model Serving — Đưa Pipeline Lên Production _ My Learning Notes_files/css2" rel="stylesheet"><style>:root{--notes-bg:#FAFAF8;--notes-bg-alt:#F3F1ED;--notes-text:#1A1A1A;--notes-text-muted:#6B6B6B;--notes-accent:#4A6FA5;--notes-accent-light:#E8EFF8;--notes-accent-hover:#3A5A8A;--notes-border:#E5E2DC;--notes-card-shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);--notes-card-shadow-hover:0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06);--notes-radius:12px;--notes-font-heading:'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;--notes-font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;--notes-font-code:'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace}body.notes-section{background:var(--notes-bg)!important;color:var(--notes-text)!important}body.notes-section.dark{background:var(--notes-bg)!important;color:var(--notes-text)!important}body.notes-section .header{background:var(--notes-bg)!important;border-bottom:1px solid var(--notes-border)}body.notes-section .header .nav{max-width:860px}body.notes-section .logo a{color:var(--notes-text)!important;font-family:var(--notes-font-heading);font-weight:600}body.notes-section #menu a{color:var(--notes-text-muted)!important;font-family:var(--notes-font-body);font-weight:500;font-size:.9rem;letter-spacing:.02em}body.notes-section #menu .active{color:var(--notes-accent)!important}body.notes-section #theme-toggle{display:none}body.notes-section .main{max-width:860px;margin:0 auto;padding:2rem 1.5rem}.notes-hero{text-align:center;margin-bottom:3rem;padding:2.5rem 0 1.5rem}.notes-hero h1{font-family:var(--notes-font-heading);font-size:2.8rem;font-weight:700;color:var(--notes-text);margin-bottom:.5rem;letter-spacing:-.02em}.notes-hero p{font-family:var(--notes-font-body);font-size:1.1rem;color:var(--notes-text-muted);font-weight:300;max-width:500px;margin:0 auto}.notes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;margin-bottom:2rem}@media(max-width:640px){.notes-grid{grid-template-columns:1fr}}.notes-card{background:#fff;border:1px solid var(--notes-border);border-radius:var(--notes-radius);padding:1.75rem;text-decoration:none;color:inherit;transition:all .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--notes-card-shadow);display:flex;flex-direction:column}.notes-card:hover{box-shadow:var(--notes-card-shadow-hover);border-color:var(--notes-accent);transform:translateY(-2px)}.notes-card-icon{font-size:2rem;margin-bottom:.75rem}.notes-card h2{font-family:var(--notes-font-heading);font-size:1.35rem;font-weight:600;color:var(--notes-text);margin:0 0 .5rem;letter-spacing:-.01em}.notes-card p{font-family:var(--notes-font-body);font-size:.875rem;color:var(--notes-text-muted);line-height:1.6;margin:0 0 1rem;flex:1}.notes-card-count{font-family:var(--notes-font-body);font-size:.8rem;color:var(--notes-accent);font-weight:500;letter-spacing:.03em;text-transform:uppercase}.notes-category-header{margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--notes-border)}.notes-category-header h1{font-family:var(--notes-font-heading);font-size:2.2rem;font-weight:700;color:var(--notes-text);margin-bottom:.35rem}.notes-category-header p{font-family:var(--notes-font-body);font-size:1rem;color:var(--notes-text-muted);font-weight:300}.notes-back{font-family:var(--notes-font-body);font-size:.85rem;color:var(--notes-accent);text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;margin-bottom:1rem;font-weight:500}.notes-back:hover{color:var(--notes-accent-hover)}.notes-list{list-style:none;padding:0;margin:0}.notes-list-item{border-bottom:1px solid var(--notes-border);transition:background .15s ease}.notes-list-item:last-child{border-bottom:none}.notes-list-item a{display:block;padding:1.1rem 1rem;text-decoration:none;color:var(--notes-text);font-family:var(--notes-font-body);font-size:1rem;font-weight:400;transition:all .15s ease;border-radius:8px}.notes-list-item a:hover{background:var(--notes-accent-light);color:var(--notes-accent);padding-left:1.25rem}.notes-article{max-width:760px;margin:0 auto}.notes-article-header{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--notes-border)}.notes-article-header h1{font-family:var(--notes-font-heading);font-size:2.2rem;font-weight:700;color:var(--notes-text);line-height:1.25;margin-bottom:.75rem;letter-spacing:-.02em}.notes-article-meta{font-family:var(--notes-font-body);font-size:.85rem;color:var(--notes-text-muted);display:flex;gap:1.5rem;flex-wrap:wrap}.notes-content{font-family:var(--notes-font-body);font-size:1.05rem;line-height:1.75;color:var(--notes-text)}.notes-content h1,.notes-content h2,.notes-content h3,.notes-content h4{font-family:var(--notes-font-heading);color:var(--notes-text);margin-top:2.25rem;margin-bottom:.75rem;letter-spacing:-.01em}.notes-content h2{font-size:1.6rem;font-weight:700;padding-bottom:.4rem;border-bottom:1px solid var(--notes-border)}.notes-content h3{font-size:1.3rem;font-weight:600}.notes-content h4{font-size:1.1rem;font-weight:600;font-family:var(--notes-font-body)}.notes-content p{margin-bottom:1.25rem}.notes-content a{color:var(--notes-accent);text-decoration:underline;text-underline-offset:2px}.notes-content a:hover{color:var(--notes-accent-hover)}.notes-content strong{font-weight:600;color:var(--notes-text)}.notes-content ul,.notes-content ol{padding-left:1.5rem;margin-bottom:1.25rem}.notes-content li{margin-bottom:.35rem}.notes-content li::marker{color:var(--notes-accent)}.notes-content code{font-family:var(--notes-font-code);font-size:.88em;background:var(--notes-bg-alt);padding:.15em .4em;border-radius:4px;color:var(--notes-accent-hover)}.notes-content pre{background:#1e1e2e!important;border-radius:10px;padding:1.25rem 1.5rem;overflow-x:auto;margin:1.5rem 0;border:1px solid rgba(255,255,255,5%);box-shadow:0 2px 8px rgba(0,0,0,.15)}.notes-content pre code{background:0 0;color:#cdd6f4;padding:0;font-size:.875rem;line-height:1.6}.notes-content table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.925rem;border-radius:8px;overflow:hidden;border:1px solid var(--notes-border)}.notes-content thead{background:var(--notes-bg-alt)}.notes-content th{font-weight:600;text-align:left;padding:.75rem 1rem;border-bottom:2px solid var(--notes-border);font-family:var(--notes-font-body);font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:var(--notes-text-muted)}.notes-content td{padding:.7rem 1rem;border-bottom:1px solid var(--notes-border)}.notes-content tbody tr:last-child td{border-bottom:none}.notes-content tbody tr:hover{background:var(--notes-accent-light)}.notes-content blockquote{border-left:3px solid var(--notes-accent);margin:1.5rem 0;padding:.75rem 1.25rem;background:var(--notes-accent-light);border-radius:0 8px 8px 0;color:var(--notes-text)}.notes-content blockquote p{margin-bottom:0}.notes-content hr{border:none;border-top:1px solid var(--notes-border);margin:2rem 0}body.notes-section .toc{background:var(--notes-bg);border:1px solid var(--notes-border);border-radius:var(--notes-radius);padding:1.25rem 1.5rem;margin-bottom:2rem;box-shadow:none}body.notes-section .toc .inner{margin:0;padding:0}body.notes-section .toc a{font-family:var(--notes-font-body);color:var(--notes-text-muted);font-size:.9rem}body.notes-section .toc a:hover{color:var(--notes-accent)}body.notes-section .toc summary{font-family:var(--notes-font-heading);font-weight:600;color:var(--notes-text);font-size:1.1rem;cursor:pointer}body.notes-section .footer{background:var(--notes-bg)!important;color:var(--notes-text-muted)!important;border-top:1px solid var(--notes-border)}body.notes-section .footer a{color:var(--notes-accent)!important}body.notes-section .post-content{color:var(--notes-text)}</style><style type="text/css">.CtxtMenu_InfoClose {  top:.2em; right:.2em;}
+.CtxtMenu_InfoContent {  overflow:auto; text-align:left; font-size:80%;  padding:.4em .6em; border:1px inset; margin:1em 0px;  max-height:20em; max-width:30em; background-color:#EEEEEE;  white-space:normal;}
+.CtxtMenu_Info.CtxtMenu_MousePost {outline:none;}
+.CtxtMenu_Info {  position:fixed; left:50%; width:auto; text-align:center;  border:3px outset; padding:1em 2em; background-color:#DDDDDD;  color:black;  cursor:default; font-family:message-box; font-size:120%;  font-style:normal; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 15px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius:15px;               /* Safari and Chrome */  -moz-border-radius:15px;                  /* Firefox */  -khtml-border-radius:15px;                /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */  filter:progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color="gray", Positive="true"); /* IE */}
+</style><style type="text/css">.CtxtMenu_MenuClose {  position:absolute;  cursor:pointer;  display:inline-block;  border:2px solid #AAA;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  font-family: "Courier New", Courier;  font-size:24px;  color:#F0F0F0}
+.CtxtMenu_MenuClose span {  display:block; background-color:#AAA; border:1.5px solid;  border-radius:18px;  -webkit-border-radius: 18px;             /* Safari and Chrome */  -moz-border-radius: 18px;                /* Firefox */  -khtml-border-radius: 18px;              /* Konqueror */  line-height:0;  padding:8px 0 6px     /* may need to be browser-specific */}
+.CtxtMenu_MenuClose:hover {  color:white!important;  border:2px solid #CCC!important}
+.CtxtMenu_MenuClose:hover span {  background-color:#CCC!important}
+.CtxtMenu_MenuClose:hover:focus {  outline:none}
+</style><style type="text/css">.CtxtMenu_Menu {  position:absolute;  background-color:white;  color:black;  width:auto; padding:5px 0px;  border:1px solid #CCCCCC; margin:0; cursor:default;  font: menu; text-align:left; text-indent:0; text-transform:none;  line-height:normal; letter-spacing:normal; word-spacing:normal;  word-wrap:normal; white-space:nowrap; float:none; z-index:201;  border-radius: 5px;                     /* Opera 10.5 and IE9 */  -webkit-border-radius: 5px;             /* Safari and Chrome */  -moz-border-radius: 5px;                /* Firefox */  -khtml-border-radius: 5px;              /* Konqueror */  box-shadow:0px 10px 20px #808080;         /* Opera 10.5 and IE9 */  -webkit-box-shadow:0px 10px 20px #808080; /* Safari 3 & Chrome */  -moz-box-shadow:0px 10px 20px #808080;    /* Forefox 3.5 */  -khtml-box-shadow:0px 10px 20px #808080;  /* Konqueror */}
+.CtxtMenu_MenuItem {  padding: 1px 2em;  background:transparent;}
+.CtxtMenu_MenuArrow {  position:absolute; right:.5em; padding-top:.25em; color:#666666;  font-family: null; font-size: .75em}
+.CtxtMenu_MenuActive .CtxtMenu_MenuArrow {color:white}
+.CtxtMenu_MenuArrow.CtxtMenu_RTL {left:.5em; right:auto}
+.CtxtMenu_MenuCheck {  position:absolute; left:.7em;  font-family: null}
+.CtxtMenu_MenuCheck.CtxtMenu_RTL { right:.7em; left:auto }
+.CtxtMenu_MenuRadioCheck {  position:absolute; left: .7em;}
+.CtxtMenu_MenuRadioCheck.CtxtMenu_RTL {  right: .7em; left:auto}
+.CtxtMenu_MenuInputBox {  padding-left: 1em; right:.5em; color:#666666;  font-family: null;}
+.CtxtMenu_MenuInputBox.CtxtMenu_RTL {  left: .1em;}
+.CtxtMenu_MenuComboBox {  left:.1em; padding-bottom:.5em;}
+.CtxtMenu_MenuSlider {  left: .1em;}
+.CtxtMenu_SliderValue {  position:absolute; right:.1em; padding-top:.25em; color:#333333;  font-size: .75em}
+.CtxtMenu_SliderBar {  outline: none; background: #d3d3d3}
+.CtxtMenu_MenuLabel {  padding: 1px 2em 3px 1.33em;  font-style:italic}
+.CtxtMenu_MenuRule {  border-top: 1px solid #DDDDDD;  margin: 4px 3px;}
+.CtxtMenu_MenuDisabled {  color:GrayText}
+.CtxtMenu_MenuActive {  background-color: #606872;  color: white;}
+.CtxtMenu_MenuDisabled:focus {  background-color: #E8E8E8}
+.CtxtMenu_MenuLabel:focus {  background-color: #E8E8E8}
+.CtxtMenu_ContextMenu:focus {  outline:none}
+.CtxtMenu_ContextMenu .CtxtMenu_MenuItem:focus {  outline:none}
+.CtxtMenu_SelectionMenu {  position:relative; float:left;  border-bottom: none; -webkit-box-shadow:none; -webkit-border-radius:0px; }
+.CtxtMenu_SelectionItem {  padding-right: 1em;}
+.CtxtMenu_Selection {  right: 40%; width:50%; }
+.CtxtMenu_SelectionBox {  padding: 0em; max-height:20em; max-width: none;  background-color:#FFFFFF;}
+.CtxtMenu_SelectionDivider {  clear: both; border-top: 2px solid #000000;}
+.CtxtMenu_Menu .CtxtMenu_MenuClose {  top:-10px; left:-10px}
+</style><style id="MJX-CHTML-styles">
+mjx-container[jax="CHTML"] {
+  line-height: 0;
+}
+
+mjx-container [space="1"] {
+  margin-left: .111em;
+}
+
+mjx-container [space="2"] {
+  margin-left: .167em;
+}
+
+mjx-container [space="3"] {
+  margin-left: .222em;
+}
+
+mjx-container [space="4"] {
+  margin-left: .278em;
+}
+
+mjx-container [space="5"] {
+  margin-left: .333em;
+}
+
+mjx-container [rspace="1"] {
+  margin-right: .111em;
+}
+
+mjx-container [rspace="2"] {
+  margin-right: .167em;
+}
+
+mjx-container [rspace="3"] {
+  margin-right: .222em;
+}
+
+mjx-container [rspace="4"] {
+  margin-right: .278em;
+}
+
+mjx-container [rspace="5"] {
+  margin-right: .333em;
+}
+
+mjx-container [size="s"] {
+  font-size: 70.7%;
+}
+
+mjx-container [size="ss"] {
+  font-size: 50%;
+}
+
+mjx-container [size="Tn"] {
+  font-size: 60%;
+}
+
+mjx-container [size="sm"] {
+  font-size: 85%;
+}
+
+mjx-container [size="lg"] {
+  font-size: 120%;
+}
+
+mjx-container [size="Lg"] {
+  font-size: 144%;
+}
+
+mjx-container [size="LG"] {
+  font-size: 173%;
+}
+
+mjx-container [size="hg"] {
+  font-size: 207%;
+}
+
+mjx-container [size="HG"] {
+  font-size: 249%;
+}
+
+mjx-container [width="full"] {
+  width: 100%;
+}
+
+mjx-box {
+  display: inline-block;
+}
+
+mjx-block {
+  display: block;
+}
+
+mjx-itable {
+  display: inline-table;
+}
+
+mjx-row {
+  display: table-row;
+}
+
+mjx-row > * {
+  display: table-cell;
+}
+
+mjx-mtext {
+  display: inline-block;
+}
+
+mjx-mstyle {
+  display: inline-block;
+}
+
+mjx-merror {
+  display: inline-block;
+  color: red;
+  background-color: yellow;
+}
+
+mjx-mphantom {
+  visibility: hidden;
+}
+
+_::-webkit-full-page-media, _:future, :root mjx-container {
+  will-change: opacity;
+}
+
+mjx-assistive-mml {
+  position: absolute !important;
+  top: 0px;
+  left: 0px;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 1px 0px 0px 0px !important;
+  border: 0px !important;
+  display: block !important;
+  width: auto !important;
+  overflow: hidden !important;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+mjx-assistive-mml[display="block"] {
+  width: 100% !important;
+}
+
+mjx-c::before {
+  display: block;
+  width: 0;
+}
+
+.MJX-TEX {
+  font-family: MJXZERO, MJXTEX;
+}
+
+.TEX-B {
+  font-family: MJXZERO, MJXTEX-B;
+}
+
+.TEX-I {
+  font-family: MJXZERO, MJXTEX-I;
+}
+
+.TEX-MI {
+  font-family: MJXZERO, MJXTEX-MI;
+}
+
+.TEX-BI {
+  font-family: MJXZERO, MJXTEX-BI;
+}
+
+.TEX-S1 {
+  font-family: MJXZERO, MJXTEX-S1;
+}
+
+.TEX-S2 {
+  font-family: MJXZERO, MJXTEX-S2;
+}
+
+.TEX-S3 {
+  font-family: MJXZERO, MJXTEX-S3;
+}
+
+.TEX-S4 {
+  font-family: MJXZERO, MJXTEX-S4;
+}
+
+.TEX-A {
+  font-family: MJXZERO, MJXTEX-A;
+}
+
+.TEX-C {
+  font-family: MJXZERO, MJXTEX-C;
+}
+
+.TEX-CB {
+  font-family: MJXZERO, MJXTEX-CB;
+}
+
+.TEX-FR {
+  font-family: MJXZERO, MJXTEX-FR;
+}
+
+.TEX-FRB {
+  font-family: MJXZERO, MJXTEX-FRB;
+}
+
+.TEX-SS {
+  font-family: MJXZERO, MJXTEX-SS;
+}
+
+.TEX-SSB {
+  font-family: MJXZERO, MJXTEX-SSB;
+}
+
+.TEX-SSI {
+  font-family: MJXZERO, MJXTEX-SSI;
+}
+
+.TEX-SC {
+  font-family: MJXZERO, MJXTEX-SC;
+}
+
+.TEX-T {
+  font-family: MJXZERO, MJXTEX-T;
+}
+
+.TEX-V {
+  font-family: MJXZERO, MJXTEX-V;
+}
+
+.TEX-VB {
+  font-family: MJXZERO, MJXTEX-VB;
+}
+
+mjx-stretchy-v mjx-c, mjx-stretchy-h mjx-c {
+  font-family: MJXZERO, MJXTEX-S1, MJXTEX-S4, MJXTEX, MJXTEX-A ! important;
+}
+
+@font-face /* 0 */ {
+  font-family: MJXZERO;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff") format("woff");
+}
+
+@font-face /* 1 */ {
+  font-family: MJXTEX;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff") format("woff");
+}
+
+@font-face /* 2 */ {
+  font-family: MJXTEX-B;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff") format("woff");
+}
+
+@font-face /* 3 */ {
+  font-family: MJXTEX-I;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff") format("woff");
+}
+
+@font-face /* 4 */ {
+  font-family: MJXTEX-MI;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff") format("woff");
+}
+
+@font-face /* 5 */ {
+  font-family: MJXTEX-BI;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff") format("woff");
+}
+
+@font-face /* 6 */ {
+  font-family: MJXTEX-S1;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff") format("woff");
+}
+
+@font-face /* 7 */ {
+  font-family: MJXTEX-S2;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff") format("woff");
+}
+
+@font-face /* 8 */ {
+  font-family: MJXTEX-S3;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff") format("woff");
+}
+
+@font-face /* 9 */ {
+  font-family: MJXTEX-S4;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff") format("woff");
+}
+
+@font-face /* 10 */ {
+  font-family: MJXTEX-A;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff") format("woff");
+}
+
+@font-face /* 11 */ {
+  font-family: MJXTEX-C;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff") format("woff");
+}
+
+@font-face /* 12 */ {
+  font-family: MJXTEX-CB;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff") format("woff");
+}
+
+@font-face /* 13 */ {
+  font-family: MJXTEX-FR;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff") format("woff");
+}
+
+@font-face /* 14 */ {
+  font-family: MJXTEX-FRB;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff") format("woff");
+}
+
+@font-face /* 15 */ {
+  font-family: MJXTEX-SS;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff") format("woff");
+}
+
+@font-face /* 16 */ {
+  font-family: MJXTEX-SSB;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff") format("woff");
+}
+
+@font-face /* 17 */ {
+  font-family: MJXTEX-SSI;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff") format("woff");
+}
+
+@font-face /* 18 */ {
+  font-family: MJXTEX-SC;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff") format("woff");
+}
+
+@font-face /* 19 */ {
+  font-family: MJXTEX-T;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff") format("woff");
+}
+
+@font-face /* 20 */ {
+  font-family: MJXTEX-V;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff") format("woff");
+}
+
+@font-face /* 21 */ {
+  font-family: MJXTEX-VB;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff") format("woff");
+}
+</style></head><body class="notes-section" id="top"><script>document.body.classList.remove("dark")</script><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add("dark")</script><header class="header"><nav class="nav"><div class="logo"><a href="https://khanhnn00.github.io/learning-notes/" accesskey="h" title="My Learning Notes (Alt + H)">My Learning Notes</a><div class="logo-switches"><button id="theme-toggle" accesskey="t" title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></button></div></div><ul id="menu"><li><a href="https://khanhnn00.github.io/learning-notes/archives" title="Archive"><span>Archive</span></a></li><li><a href="https://khanhnn00.github.io/learning-notes/search/" title="Search (Alt + /)" accesskey="/"><span>Search</span></a></li><li><a href="https://khanhnn00.github.io/learning-notes/tags/" title="Tags"><span>Tags</span></a></li><li><a href="https://khanhnn00.github.io/learning-notes/notes/" title="Notes"><span>Notes</span></a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/" title="XBrain"><span>XBrain</span></a></li></ul></nav></header><main class="main"><article class="notes-article"><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/" class="notes-back">← AIOps W2 — RCA &amp; Smart Response</a><header class="notes-article-header"><h1>W2-D3: Model Serving — Đưa Pipeline Lên Production</h1><div class="notes-article-meta"><span>12 min read</span>
+<span>2544 words</span></div></header><div class="toc"><details><summary accesskey="c" title="(Alt + C)"><span class="details">Table of Contents</span></summary><div class="inner"><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#model-serving--%c4%91%c6%b0a-pipeline-l%c3%aan-production" aria-label="Model Serving — Đưa Pipeline Lên Production">Model Serving — Đưa Pipeline Lên Production</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#1-framework--fastapi-vs-flask-vs-bentoml" aria-label="1. Framework — FastAPI vs Flask vs BentoML">1. Framework — FastAPI vs Flask vs BentoML</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#2-endpoint-c%c6%a1-b%e1%ba%a3n" aria-label="2. Endpoint cơ bản">2. Endpoint cơ bản</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#21-skeleton" aria-label="2.1 Skeleton">2.1 Skeleton</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#22-pydantic-validation--kh%c3%b4ng-ph%e1%ba%a3i-optional" aria-label="2.2 Pydantic validation — không phải optional">2.2 Pydantic validation — không phải optional</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#3-chain-3-layer-l%e1%ba%a1i" aria-label="3. Chain 3 Layer Lại">3. Chain 3 Layer Lại</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#4-latency-budget" aria-label="4. Latency Budget">4. Latency Budget</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#41-%c4%91o-tr%c6%b0%e1%bb%9bc-optimize-sau" aria-label="4.1 Đo trước, optimize sau">4.1 Đo trước, optimize sau</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#42-optimization-cho-llm-call" aria-label="4.2 Optimization cho LLM call">4.2 Optimization cho LLM call</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#43-timeout" aria-label="4.3 Timeout">4.3 Timeout</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#5-concurrency" aria-label="5. Concurrency">5. Concurrency</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#51-1-worker-vs-n-worker" aria-label="5.1 1 worker vs N worker">5.1 1 worker vs N worker</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#52-race-condition-v%e1%bb%9bi-shared-state" aria-label="5.2 Race condition với shared state">5.2 Race condition với shared state</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#53-concurrent-test" aria-label="5.3 Concurrent test">5.3 Concurrent test</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#6-health-check--readiness" aria-label="6. Health Check + Readiness">6. Health Check + Readiness</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#7-versioning--rollback" aria-label="7. Versioning + Rollback">7. Versioning + Rollback</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#71-version-trong-response" aria-label="7.1 Version trong response">7.1 Version trong response</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#72-feature-flag-cho-llm" aria-label="7.2 Feature flag cho LLM">7.2 Feature flag cho LLM</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#73-shadow-deployment-concept" aria-label="7.3 Shadow deployment (concept)">7.3 Shadow deployment (concept)</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#8-self-monitoring" aria-label="8. Self-Monitoring">8. Self-Monitoring</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#81-metric-prometheus" aria-label="8.1 Metric Prometheus">8.1 Metric Prometheus</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#82-key-slo-cho-aiops-pipeline" aria-label="8.2 Key SLO cho AIOps pipeline">8.2 Key SLO cho AIOps pipeline</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#83-logging" aria-label="8.3 Logging">8.3 Logging</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#9-testing" aria-label="9. Testing">9. Testing</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#91-unit-test--pure-function" aria-label="9.1 Unit test — pure function">9.1 Unit test — pure function</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#92-integration-test--endpoint" aria-label="9.2 Integration test — endpoint">9.2 Integration test — endpoint</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#93-mock-llm-trong-test" aria-label="9.3 Mock LLM trong test">9.3 Mock LLM trong test</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#10-deploy-local--make-it-run" aria-label="10. Deploy Local — Make it run">10. Deploy Local — Make it run</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#101-requirementstxt" aria-label="10.1 requirements.txt">10.1 requirements.txt</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#102-makefile-optional-n%c3%a2ng-%c4%91i%e1%bb%83m-project-running" aria-label="10.2 Makefile (optional, nâng điểm Project Running)">10.2 Makefile (optional, nâng điểm Project Running)</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#103-dockerfile-n%c3%a2ng-cao" aria-label="10.3 Dockerfile (nâng cao)">10.3 Dockerfile (nâng cao)</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#11-embedded-exercise" aria-label="11. Embedded Exercise">11. Embedded Exercise</a><ul><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#111-steps" aria-label="11.1 Steps">11.1 Steps</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#112-acceptance" aria-label="11.2 Acceptance">11.2 Acceptance</a></li></ul></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#12-eod-checkpoint" aria-label="12. EOD Checkpoint">12. EOD Checkpoint</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#13-resources" aria-label="13. Resources">13. Resources</a></li><li><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#14-sang-friday" aria-label="14. Sang Friday">14. Sang Friday</a></li></ul></li></ul></div></details></div><div class="notes-content"><h1 id="model-serving--đưa-pipeline-lên-production">Model Serving — Đưa Pipeline Lên Production<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#model-serving--%C4%91%C6%B0a-pipeline-l%C3%AAn-production">#</a></h1><p>D1 + D2 cho bạn 2 layer chạy được trong notebook. Notebook không phải production. Hôm nay biến nó thành <strong>API service</strong> mà 1 hệ thống monitoring có thể POST alert vào và nhận lại incident report.</p><p>Khi nói “serving” trong AIOps, <strong>không</strong> chỉ về serve ML model — nó là về serve <strong>toàn bộ pipeline</strong> (correlation + RCA + LLM call) như 1 unit có:</p><ul><li>HTTP endpoint</li><li>Latency budget</li><li>Health check</li><li>Versioning + rollback</li><li>Monitoring của chính bản thân nó</li></ul><p>Cuối ngày bạn có <code>serve.py</code> chạy được, đó là Layer 4 của lab Friday.</p><blockquote><p><strong>Rule of thumb:</strong> Pipeline trong notebook khác với pipeline production ở 3 thứ — <strong>concurrency</strong>, <strong>failure handling</strong>, và <strong>observability</strong>. Đừng đợi production để nghĩ về 3 thứ này.</p></blockquote><hr><h2 id="1-framework--fastapi-vs-flask-vs-bentoml">1. Framework — FastAPI vs Flask vs BentoML<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#1-framework--fastapi-vs-flask-vs-bentoml">#</a></h2><p>3 framework phổ biến cho Python serving. Tóm gọn:</p><table><thead><tr><th>Framework</th><th>Khi nào dùng</th><th>Ưu</th><th>Nhược</th></tr></thead><tbody><tr><td><strong>Flask</strong></td><td>Quick prototype, học</td><td>Simple, ít magic</td><td>Sync only (cần workaround cho async), không validate input native</td></tr><tr><td><strong>FastAPI</strong></td><td>Production API, mixed workload</td><td>Async, Pydantic validation, OpenAPI auto, type hints</td><td>Magic hơn Flask một chút</td></tr><tr><td><strong>BentoML</strong></td><td>ML model–centric</td><td>Model versioning, batching native, Yatai deploy</td><td>Học curve, overhead cho non-ML workload</td></tr></tbody></table><p>Cho lab W2 dùng <strong>FastAPI</strong>. Lý do: pipeline có LLM call (IO bound, hưởng từ async), input có schema (Pydantic dễ), trainer test bằng <code>curl</code>/<code>requests</code> (OpenAPI giúp document).</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">uv pip install fastapi uvicorn pydantic
+</span></span></code></pre><button class="copy-code">copy</button></div><hr><h2 id="2-endpoint-cơ-bản">2. Endpoint cơ bản<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#2-endpoint-c%C6%A1-b%E1%BA%A3n">#</a></h2><h3 id="21-skeleton">2.1 Skeleton<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#21-skeleton">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># serve.py</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">logging</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">'</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'aiops'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">title</span><span class="o">=</span><span class="s1">'AIOps Incident Pipeline'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">version</span><span class="o">=</span><span class="s1">'1.0.0'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">description</span><span class="o">=</span><span class="s1">'Group lab W2 — correlate alerts → RCA → suggest action'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Pydantic schema — input validation</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Alert</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ts</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">service</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
+</span></span><span class="line"><span class="cl">    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span>
+</span></span><span class="line"><span class="cl">    <span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">IncidentRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">alerts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Alert</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Output schema (match W2_lab_spec.md Section 4)</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Cluster</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cluster_id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">alert_count</span><span class="p">:</span> <span class="nb">int</span>
+</span></span><span class="line"><span class="cl">    <span class="n">services</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">time_range</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">RootCause</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">service</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+</span></span><span class="line"><span class="cl">    <span class="n">reasoning</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">SimilarIncident</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">similarity</span><span class="p">:</span> <span class="nb">float</span>
+</span></span><span class="line"><span class="cl">    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">IncidentResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cluster</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">root_cause</span><span class="p">:</span> <span class="n">RootCause</span>
+</span></span><span class="line"><span class="cl">    <span class="n">recommended_actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">similar_incidents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SimilarIncident</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.get</span><span class="p">(</span><span class="s1">'/healthz'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">healthz</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'ok'</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">IncidentResponse</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">post_incident</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">IncidentRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IncidentResponse</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"""
+</span></span></span><span class="line"><span class="cl"><span class="s2">    Process batch of alerts → return incident report.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    
+</span></span></span><span class="line"><span class="cl"><span class="s2">    Chain: correlate (L1) → rca (L2) → enrich w/ LLM (L3) → assemble response.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    """</span>
+</span></span><span class="line"><span class="cl">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">alerts</span><span class="p">)</span><span class="si">}</span><span class="s2"> alerts"</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">req</span><span class="o">.</span><span class="n">alerts</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s1">'Empty alert list'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># ... pipeline calls go here ...</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Stub:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">IncidentResponse</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">clusters</span><span class="o">=</span><span class="p">[],</span>
+</span></span><span class="line"><span class="cl">        <span class="n">root_cause</span><span class="o">=</span><span class="n">RootCause</span><span class="p">(</span><span class="n">service</span><span class="o">=</span><span class="s1">'unknown'</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">reasoning</span><span class="o">=</span><span class="s1">'not implemented'</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">recommended_actions</span><span class="o">=</span><span class="p">[],</span>
+</span></span><span class="line"><span class="cl">        <span class="n">similar_incidents</span><span class="o">=</span><span class="p">[],</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Chạy:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">uvicorn serve:app --host 0.0.0.0 --port <span class="m">8000</span> --reload
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Test:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl http://localhost:8000/healthz
+</span></span><span class="line"><span class="cl"><span class="c1"># {"status":"ok"}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">curl -X POST http://localhost:8000/incident <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  -H <span class="s2">"Content-Type: application/json"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  -d <span class="s1">'{"alerts":[{"id":"a-1","ts":"2026-06-12T09:42:01Z","service":"payment-svc","metric":"latency_p99_ms","severity":"crit","value":1840,"threshold":800}]}'</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><h3 id="22-pydantic-validation--không-phải-optional">2.2 Pydantic validation — không phải optional<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#22-pydantic-validation--kh%C3%B4ng-ph%E1%BA%A3i-optional">#</a></h3><p>Nếu input sai format (e.g. missing <code>service</code> field), Pydantic auto trả <strong>422</strong> với detail. Không cần code thêm.</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ curl -X POST http://localhost:8000/incident -H <span class="s2">"Content-Type: application/json"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>       -d <span class="s1">'{"alerts":[{"id":"a-1"}]}'</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 422 Unprocessable Entity</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># {"detail":[{"loc":["body","alerts",0,"ts"],"msg":"field required","type":"value_error.missing"}, ...]}</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Trainer test sẽ kiểm tra cả happy path lẫn malformed input. Đảm bảo endpoint không trả 500 khi input sai.</p><hr><h2 id="3-chain-3-layer-lại">3. Chain 3 Layer Lại<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#3-chain-3-layer-l%E1%BA%A1i">#</a></h2><p>Pipeline assembly — gọi correlate.py → rca.py → enrich.py:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># pipeline.py — glue layer</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">correlate</span> <span class="kn">import</span> <span class="n">correlate</span><span class="p">,</span> <span class="n">build_graph_from_json</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">rca</span> <span class="kn">import</span> <span class="n">run_rca</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">enrich</span> <span class="kn">import</span> <span class="n">call_llm_action_suggest</span>  <span class="c1"># team L3 code</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">json</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Load once at module level (cached)</span>
+</span></span><span class="line"><span class="cl"><span class="n">GRAPH</span> <span class="o">=</span> <span class="n">build_graph_from_json</span><span class="p">(</span><span class="s1">'lab/dataset/services.json'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">HISTORY</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s1">'lab/dataset/incidents_history.json'</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())[</span><span class="s1">'incidents'</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">process_batch</span><span class="p">(</span><span class="n">alerts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"""
+</span></span></span><span class="line"><span class="cl"><span class="s2">    Full pipeline. Trả về dict matching IncidentResponse schema.
+</span></span></span><span class="line"><span class="cl"><span class="s2">    """</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># L1: Correlate</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clusters</span> <span class="o">=</span> <span class="n">correlate</span><span class="p">(</span><span class="n">alerts</span><span class="p">,</span> <span class="n">GRAPH</span><span class="p">,</span> <span class="n">gap_sec</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">max_hop</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">clusters</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'clusters'</span><span class="p">:</span> <span class="p">[],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'root_cause'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'service'</span><span class="p">:</span> <span class="s1">'unknown'</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'reasoning'</span><span class="p">:</span> <span class="s1">'No clusters'</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'recommended_actions'</span><span class="p">:</span> <span class="p">[],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'similar_incidents'</span><span class="p">:</span> <span class="p">[],</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Pick largest cluster as "primary incident"</span>
+</span></span><span class="line"><span class="cl">    <span class="n">primary</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'alert_count'</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># L2 + L3: RCA + LLM enrichment cho primary cluster</span>
+</span></span><span class="line"><span class="cl">    <span class="n">rca_result</span> <span class="o">=</span> <span class="n">run_rca</span><span class="p">(</span><span class="n">primary</span><span class="p">,</span> <span class="n">alerts</span><span class="p">,</span> <span class="n">GRAPH</span><span class="p">,</span> <span class="n">HISTORY</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Assemble response</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'clusters'</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">            <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="s1">'cluster_id'</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'cluster_id'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">                <span class="s1">'alert_count'</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'alert_count'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">                <span class="s1">'services'</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'services'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">                <span class="s1">'time_range'</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'time_range'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clusters</span>
+</span></span><span class="line"><span class="cl">        <span class="p">],</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'root_cause'</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'service'</span><span class="p">:</span> <span class="n">rca_result</span><span class="p">[</span><span class="s1">'root_cause'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'confidence'</span><span class="p">:</span> <span class="n">rca_result</span><span class="p">[</span><span class="s1">'confidence'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'reasoning'</span><span class="p">:</span> <span class="n">rca_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'reasoning'</span><span class="p">,</span> <span class="s1">''</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'recommended_actions'</span><span class="p">:</span> <span class="n">rca_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'actions'</span><span class="p">,</span> <span class="p">[]),</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'similar_incidents'</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">            <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="n">inc_id</span><span class="p">,</span> <span class="s1">'similarity'</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s1">'summary'</span><span class="p">:</span> <span class="s1">'...'</span><span class="p">}</span>  <span class="c1"># populate từ history</span>
+</span></span><span class="line"><span class="cl">            <span class="k">for</span> <span class="n">inc_id</span> <span class="ow">in</span> <span class="n">rca_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'similar_incidents'</span><span class="p">,</span> <span class="p">[])[:</span><span class="mi">3</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="p">],</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Sau đó cập nhật <code>serve.py</code>:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">pipeline</span> <span class="kn">import</span> <span class="n">process_batch</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">IncidentResponse</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">post_incident</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">IncidentRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IncidentResponse</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">alerts_dict</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">alerts</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">result</span> <span class="o">=</span> <span class="n">process_batch</span><span class="p">(</span><span class="n">alerts_dict</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pipeline failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Pipeline error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">IncidentResponse</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">)</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><hr><h2 id="4-latency-budget">4. Latency Budget<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#4-latency-budget">#</a></h2><h3 id="41-đo-trước-optimize-sau">4.1 Đo trước, optimize sau<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#41-%C4%91o-tr%C6%B0%E1%BB%9Bc-optimize-sau">#</a></h3><p>Add middleware đo latency mỗi request:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">time</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">Request</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.middleware</span><span class="p">(</span><span class="s1">'http'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">async</span> <span class="k">def</span> <span class="nf">add_timing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">call_next</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">duration_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+</span></span><span class="line"><span class="cl">    <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">'X-Response-Time-Ms'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">duration_ms</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">'</span>
+</span></span><span class="line"><span class="cl">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">duration_ms</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms"</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">response</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Trên scenario chính (200 alert), latency breakdown thường:</p><table><thead><tr><th>Phase</th><th>Time</th><th>%</th></tr></thead><tbody><tr><td>Pydantic parse + validate</td><td>5-10ms</td><td>0.2%</td></tr><tr><td>Layer 1 correlate (Python loops)</td><td>50-100ms</td><td>2%</td></tr><tr><td>Layer 2 graph RCA</td><td>20-50ms</td><td>1%</td></tr><tr><td>Layer 3 LLM call (network)</td><td>3-8s</td><td><strong>95-97%</strong></td></tr><tr><td>Response serialize</td><td>5-10ms</td><td>0.2%</td></tr><tr><td><strong>Total</strong></td><td><strong>3.5-8.5s</strong></td><td></td></tr></tbody></table><p>LLM call <strong>dominate</strong>. Tối ưu 100ms ở L1/L2 = 1% improvement. Tối ưu LLM = lớn.</p><h3 id="42-optimization-cho-llm-call">4.2 Optimization cho LLM call<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#42-optimization-cho-llm-call">#</a></h3><ol><li><p><strong>Cache</strong> — same prompt → cached response (hash prompt):</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">hashlib</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">_llm_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">cached_llm_call</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">key</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_llm_cache</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_llm_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_do_llm_call</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">_llm_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Cảnh báo: cache không clear → memory grow. Dùng <code>cachetools.TTLCache(maxsize=1000, ttl=3600)</code>.</p></li><li><p><strong>Async + concurrent</strong> — nếu cần gọi LLM cho 3 cluster, gọi 3 song song thay vì sequential:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">asyncio</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">async</span> <span class="k">def</span> <span class="nf">llm_call_async</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># Use openai async client</span>
+</span></span><span class="line"><span class="cl">    <span class="o">...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">async</span> <span class="k">def</span> <span class="nf">post_incident</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">IncidentRequest</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="o">...</span>
+</span></span><span class="line"><span class="cl">    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">llm_call_async</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prompts</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+</span></span></code></pre><button class="copy-code">copy</button></div></li><li><p><strong>Smaller model</strong> — gpt-4o-mini thay gpt-4o, hoặc gemini-flash. 5x cheap + 2x faster.</p></li><li><p><strong>Skip LLM</strong> — nếu graph RCA confidence ≥ 0.9, không cần LLM enrichment.</p></li></ol><h3 id="43-timeout">4.3 Timeout<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#43-timeout">#</a></h3><p>Set timeout cho mọi outbound call:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+</span></span><span class="line"><span class="cl"><span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 10s timeout, 2 retry</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Hoặc với requests:</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># requests.post(url, json=..., timeout=(3, 10))  # connect=3s, read=10s</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Không timeout → 1 LLM call hang → endpoint hang forever → trainer demo fail.</p><hr><h2 id="5-concurrency">5. Concurrency<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#5-concurrency">#</a></h2><h3 id="51-1-worker-vs-n-worker">5.1 1 worker vs N worker<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#51-1-worker-vs-n-worker">#</a></h3><p>Default <code>uvicorn serve:app</code> chạy 1 worker. 1 worker = 1 process xử lý request <strong>sequential</strong> (cho sync code) hoặc concurrent với event loop (cho async code).</p><p>Để scale cho production, dùng nhiều worker:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">uvicorn serve:app --host 0.0.0.0 --port <span class="m">8000</span> --workers <span class="m">4</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Khi 4 worker, request được load balance round-robin. Trade-off: nhiều worker → nhiều memory (process duplicate state).</p><h3 id="52-race-condition-với-shared-state">5.2 Race condition với shared state<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#52-race-condition-v%E1%BB%9Bi-shared-state">#</a></h3><p>Nếu pipeline có in-memory cache (e.g. dedup fingerprint store) + nhiều worker → mỗi worker có copy riêng → dedup không cross-worker.</p><p>Solution: <strong>stateless</strong> — mỗi request load state từ Redis hoặc DB. Hoặc giữ stateless trong lab (chấp nhận limitation, document trong reflection).</p><p>Lab này chấp nhận stateless / single-worker — không phải production scale exercise. Quan trọng là <strong>biết</strong> trade-off, không phải implement perfect.</p><h3 id="53-concurrent-test">5.3 Concurrent test<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#53-concurrent-test">#</a></h3><p>Test endpoint chịu được concurrent request:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Apache Bench: 100 request, 10 concurrent</span>
+</span></span><span class="line"><span class="cl">ab -n <span class="m">100</span> -c <span class="m">10</span> -p alerts.json -T application/json http://localhost:8000/incident
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># wrk: 10 thread, 30s</span>
+</span></span><span class="line"><span class="cl">wrk -t10 -c50 -d30s --script post.lua http://localhost:8000/incident
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Theo dõi p50 / p99 + error rate. Nếu p99 &gt; 30s hoặc error &gt; 1% → cần fix.</p><hr><h2 id="6-health-check--readiness">6. Health Check + Readiness<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#6-health-check--readiness">#</a></h2><p><code>/healthz</code> (section 2) đủ cho liveness. Cho <strong>readiness</strong> (k8s rolling deploy), thêm:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@app.get</span><span class="p">(</span><span class="s1">'/readyz'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">readyz</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"""Check downstream dependencies. Trả 503 nếu chưa ready."""</span>
+</span></span><span class="line"><span class="cl">    <span class="n">checks</span> <span class="o">=</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Check graph loaded</span>
+</span></span><span class="line"><span class="cl">    <span class="n">checks</span><span class="p">[</span><span class="s1">'graph'</span><span class="p">]</span> <span class="o">=</span> <span class="n">GRAPH</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Check history loaded</span>
+</span></span><span class="line"><span class="cl">    <span class="n">checks</span><span class="p">[</span><span class="s1">'history'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">HISTORY</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Check LLM API (optional, có thể skip để readiness không depend external)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># quick model list call</span>
+</span></span><span class="line"><span class="cl">        <span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+</span></span><span class="line"><span class="cl">        <span class="n">OpenAI</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="n">checks</span><span class="p">[</span><span class="s1">'llm'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+</span></span><span class="line"><span class="cl">    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">checks</span><span class="p">[</span><span class="s1">'llm'</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">checks</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="n">checks</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'ready'</span><span class="p">,</span> <span class="s1">'checks'</span><span class="p">:</span> <span class="n">checks</span><span class="p">}</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Lý do tách <code>/healthz</code> vs <code>/readyz</code>:</p><ul><li><strong>healthz</strong> = process còn sống (k8s restart pod nếu fail). Không depend external.</li><li><strong>readyz</strong> = sẵn sàng nhận traffic (k8s remove from load balancer nếu fail). Depend external.</li></ul><hr><h2 id="7-versioning--rollback">7. Versioning + Rollback<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#7-versioning--rollback">#</a></h2><h3 id="71-version-trong-response">7.1 Version trong response<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#71-version-trong-response">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">APP_VERSION</span> <span class="o">=</span> <span class="s1">'1.0.0'</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@app.get</span><span class="p">(</span><span class="s1">'/version'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'app'</span><span class="p">:</span> <span class="n">APP_VERSION</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'pipeline_config'</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'correlate_gap_sec'</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'correlate_max_hop'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'rca_method'</span><span class="p">:</span> <span class="s1">'graph+llm'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'llm_model'</span><span class="p">:</span> <span class="s1">'gpt-4o-mini'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Trainer hỏi “version code bạn deploy” → bạn có endpoint trả lời.</p><h3 id="72-feature-flag-cho-llm">7.2 Feature flag cho LLM<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#72-feature-flag-cho-llm">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">os</span>
+</span></span><span class="line"><span class="cl"><span class="n">USE_LLM</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'AIOPS_USE_LLM'</span><span class="p">,</span> <span class="s1">'true'</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'true'</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">run_rca_with_flag</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">alerts</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">history</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="ow">not</span> <span class="n">USE_LLM</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># Skip LLM, return graph-only result</span>
+</span></span><span class="line"><span class="cl">        <span class="n">candidates</span> <span class="o">=</span> <span class="n">rca_combined</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">alerts</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'root_cause'</span><span class="p">:</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'confidence'</span><span class="p">:</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'method'</span><span class="p">:</span> <span class="s1">'graph-only-flag-off'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="o">...</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">run_rca</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span> <span class="n">alerts</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">history</span><span class="p">)</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Khi LLM provider outage, set <code>AIOPS_USE_LLM=false</code> + restart → endpoint vẫn chạy với graph only.</p><h3 id="73-shadow-deployment-concept">7.3 Shadow deployment (concept)<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#73-shadow-deployment-concept">#</a></h3><p>Production AIOps: deploy v2 cùng v1, nhưng v2 không serve traffic — nó <strong>shadow</strong> v1 (nhận cùng input, log output). So sánh v2 output với v1 output trên data thật. Nếu OK trong 1 tuần → promote v2.</p><p>Không implement trong lab (out of scope). Đề cập để biết direction. Trong vấn đáp, biết khái niệm → +1 điểm Layer 4.</p><hr><h2 id="8-self-monitoring">8. Self-Monitoring<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#8-self-monitoring">#</a></h2><p>Pipeline AIOps <strong>monitor production</strong> — nhưng bản thân nó cũng cần monitor.</p><h3 id="81-metric-prometheus">8.1 Metric Prometheus<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#81-metric-prometheus">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">make_asgi_app</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Metrics</span>
+</span></span><span class="line"><span class="cl"><span class="n">REQUEST_COUNT</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="s1">'aiops_incident_requests_total'</span><span class="p">,</span> <span class="s1">'Total incident requests'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'status'</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl"><span class="n">REQUEST_LATENCY</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span><span class="s1">'aiops_incident_latency_seconds'</span><span class="p">,</span> <span class="s1">'Incident pipeline latency'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">LLM_FAILURES</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="s1">'aiops_llm_failures_total'</span><span class="p">,</span> <span class="s1">'LLM call failures'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'reason'</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl"><span class="n">CLUSTER_COUNT</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span><span class="s1">'aiops_clusters_per_request'</span><span class="p">,</span> <span class="s1">'Clusters produced per request'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Mount Prometheus app on /metrics</span>
+</span></span><span class="line"><span class="cl"><span class="n">app</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s1">'/metrics'</span><span class="p">,</span> <span class="n">make_asgi_app</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Use in endpoint</span>
+</span></span><span class="line"><span class="cl"><span class="nd">@app.post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">async</span> <span class="k">def</span> <span class="nf">post_incident</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">IncidentRequest</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">with</span> <span class="n">REQUEST_LATENCY</span><span class="o">.</span><span class="n">time</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">        <span class="k">try</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">result</span> <span class="o">=</span> <span class="n">process_batch</span><span class="p">([</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">alerts</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">            <span class="n">REQUEST_COUNT</span><span class="o">.</span><span class="n">labels</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'success'</span><span class="p">)</span><span class="o">.</span><span class="n">inc</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            <span class="n">CLUSTER_COUNT</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">'clusters'</span><span class="p">]))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">IncidentResponse</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">REQUEST_COUNT</span><span class="o">.</span><span class="n">labels</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'error'</span><span class="p">)</span><span class="o">.</span><span class="n">inc</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            <span class="k">raise</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><h3 id="82-key-slo-cho-aiops-pipeline">8.2 Key SLO cho AIOps pipeline<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#82-key-slo-cho-aiops-pipeline">#</a></h3><table><thead><tr><th>SLO</th><th>Target</th><th>Why</th></tr></thead><tbody><tr><td>Availability</td><td>99.5%</td><td>Pipeline down → no incident triage</td></tr><tr><td>p99 latency</td><td>&lt; 10s</td><td>Người dùng (SRE) chờ &lt; 10s</td></tr><tr><td>LLM failure rate</td><td>&lt; 1%</td><td>Higher → suspect provider issue</td></tr><tr><td>Root-cause precision (offline)</td><td>&gt; 70% top-3</td><td>Lower → pipeline làm noise thay vì help</td></tr></tbody></table><h3 id="83-logging">8.3 Logging<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#83-logging">#</a></h3><p>Structured log (JSON), không print:</p><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">logging</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">json</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">JsonFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">log_obj</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'ts'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatTime</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'level'</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">levelname</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'msg'</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">            <span class="s1">'logger'</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="s1">'extra'</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="n">log_obj</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">extra</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">log_obj</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">JsonFormatter</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl"><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'aiops'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Use:</span>
+</span></span><span class="line"><span class="cl"><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">'Processed incident'</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s1">'extra'</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s1">'cluster_count'</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s1">'root_cause'</span><span class="p">:</span> <span class="s1">'payment-svc'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="s1">'confidence'</span><span class="p">:</span> <span class="mf">0.84</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">}})</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>JSON log dễ ship vào ELK/Loki, query bằng <code>cluster_count &gt; 5</code> thay vì grep.</p><hr><h2 id="9-testing">9. Testing<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#9-testing">#</a></h2><p>Lab chấm <code>tests/</code> là <strong>optional</strong> nhưng nâng điểm. Test pyramid cho pipeline:</p><h3 id="91-unit-test--pure-function">9.1 Unit test — pure function<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#91-unit-test--pure-function">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># tests/test_correlate.py</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">pytest</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">correlate</span> <span class="kn">import</span> <span class="n">fingerprint</span><span class="p">,</span> <span class="n">session_groups</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_fingerprint_excludes_timestamp</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'service'</span><span class="p">:</span> <span class="s1">'payment-svc'</span><span class="p">,</span> <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'latency'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'crit'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:42:01Z'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1840</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'service'</span><span class="p">:</span> <span class="s1">'payment-svc'</span><span class="p">,</span> <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'latency'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'crit'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:42:30Z'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1900</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="n">fingerprint</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">fingerprint</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_session_split_on_gap</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">alerts</span> <span class="o">=</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="s1">'1'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:42:00Z'</span><span class="p">,</span> <span class="s1">'service'</span><span class="p">:</span> <span class="s1">'a'</span><span class="p">,</span> <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'m'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'warn'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'threshold'</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="s1">'2'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:42:30Z'</span><span class="p">,</span> <span class="s1">'service'</span><span class="p">:</span> <span class="s1">'a'</span><span class="p">,</span> <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'m'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'warn'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'threshold'</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="s1">'3'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:50:00Z'</span><span class="p">,</span> <span class="s1">'service'</span><span class="p">:</span> <span class="s1">'a'</span><span class="p">,</span> <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'m'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'warn'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'threshold'</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">groups</span> <span class="o">=</span> <span class="n">session_groups</span><span class="p">(</span><span class="n">alerts</span><span class="p">,</span> <span class="n">gap_sec</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>  <span class="c1"># 1 + 2 split bởi 7.5 phút gap</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><h3 id="92-integration-test--endpoint">9.2 Integration test — endpoint<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#92-integration-test--endpoint">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># tests/test_serve.py</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">fastapi.testclient</span> <span class="kn">import</span> <span class="n">TestClient</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">serve</span> <span class="kn">import</span> <span class="n">app</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">client</span> <span class="o">=</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_healthz</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">r</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'/healthz'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span> <span class="o">==</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'ok'</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_incident_empty_alerts</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">r</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">'alerts'</span><span class="p">:</span> <span class="p">[]})</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">400</span>  <span class="c1"># empty list rejected</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_incident_happy_path</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'alerts'</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span><span class="s1">'id'</span><span class="p">:</span> <span class="s1">'a-1'</span><span class="p">,</span> <span class="s1">'ts'</span><span class="p">:</span> <span class="s1">'2026-06-12T09:42:01Z'</span><span class="p">,</span> <span class="s1">'service'</span><span class="p">:</span> <span class="s1">'payment-svc'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">         <span class="s1">'metric'</span><span class="p">:</span> <span class="s1">'latency_p99_ms'</span><span class="p">,</span> <span class="s1">'severity'</span><span class="p">:</span> <span class="s1">'crit'</span><span class="p">,</span> <span class="s1">'value'</span><span class="p">:</span> <span class="mi">1840</span><span class="p">,</span> <span class="s1">'threshold'</span><span class="p">:</span> <span class="mi">800</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">]}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">r</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">'/incident'</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+</span></span><span class="line"><span class="cl">    <span class="n">body</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="s1">'clusters'</span> <span class="ow">in</span> <span class="n">body</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="s1">'root_cause'</span> <span class="ow">in</span> <span class="n">body</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p><code>uv run pytest -v</code> chạy trong &lt; 2s nếu mock LLM call.</p><h3 id="93-mock-llm-trong-test">9.3 Mock LLM trong test<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#93-mock-llm-trong-test">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@patch</span><span class="p">(</span><span class="s1">'pipeline.call_llm_rca'</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">test_pipeline_with_mock_llm</span><span class="p">(</span><span class="n">mock_llm</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">mock_llm</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'root_cause'</span><span class="p">:</span> <span class="s1">'payment-svc'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'class'</span><span class="p">:</span> <span class="s1">'connection_pool_exhaustion'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'confidence'</span><span class="p">:</span> <span class="mf">0.84</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'actions'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'Rollback'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'reasoning'</span><span class="p">:</span> <span class="s1">'mocked'</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="s1">'similar_incidents'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'INC-2025-11-08'</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># ... test pipeline ...</span>
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Mock LLM <strong>trong test</strong> OK. Mock LLM <strong>trong demo Friday</strong> = cap 3 (xem barem).</p><hr><h2 id="10-deploy-local--make-it-run">10. Deploy Local — Make it run<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#10-deploy-local--make-it-run">#</a></h2><h3 id="101-requirementstxt">10.1 requirements.txt<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#101-requirementstxt">#</a></h3><pre tabindex="0"><code>fastapi&gt;=0.110
+uvicorn[standard]&gt;=0.27
+pydantic&gt;=2.5
+networkx&gt;=3.2
+pandas&gt;=2.0
+openai&gt;=1.10
+prometheus-client&gt;=0.19
+pytest&gt;=7.4
+</code><button class="copy-code">copy</button></pre><h3 id="102-makefile-optional-nâng-điểm-project-running">10.2 Makefile (optional, nâng điểm Project Running)<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#102-makefile-optional-n%C3%A2ng-%C4%91i%E1%BB%83m-project-running">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-makefile" data-lang="makefile"><span class="line"><span class="cl"><span class="nf">.PHONY</span><span class="o">:</span> <span class="n">install</span> <span class="n">run</span> <span class="n">test</span> <span class="n">clean</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">install</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	uv pip install -r requirements.txt
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">run</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	uvicorn serve:app --host 0.0.0.0 --port <span class="m">8000</span> --reload
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">run-prod</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	uvicorn serve:app --host 0.0.0.0 --port <span class="m">8000</span> --workers <span class="m">4</span> --no-access-log
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">test</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	pytest -v tests/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">clean</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">	find . -name <span class="s2">"__pycache__"</span> -exec rm -rf <span class="o">{}</span> +
+</span></span><span class="line"><span class="cl">	rm -f rca_llm_trace.log
+</span></span></code></pre><button class="copy-code">copy</button></div><h3 id="103-dockerfile-nâng-cao">10.3 Dockerfile (nâng cao)<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#103-dockerfile-n%C3%A2ng-cao">#</a></h3><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-dockerfile" data-lang="dockerfile"><span class="line"><span class="cl"><span class="k">FROM</span><span class="s"> python:3.11-slim</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">WORKDIR</span><span class="s"> /app</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">COPY</span> requirements.txt .<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">RUN</span> pip install --no-cache-dir -r requirements.txt<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">COPY</span> . .<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">EXPOSE</span><span class="s"> 8000</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">CMD</span> <span class="p">[</span><span class="s2">"uvicorn"</span><span class="p">,</span> <span class="s2">"serve:app"</span><span class="p">,</span> <span class="s2">"--host"</span><span class="p">,</span> <span class="s2">"0.0.0.0"</span><span class="p">,</span> <span class="s2">"--port"</span><span class="p">,</span> <span class="s2">"8000"</span><span class="p">,</span> <span class="s2">"--workers"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">]</span><span class="err">
+</span></span></span></code></pre><button class="copy-code">copy</button></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">docker build -t aiops-pipeline:1.0 .
+</span></span><span class="line"><span class="cl">docker run -p 8000:8000 -e <span class="nv">OPENAI_API_KEY</span><span class="o">=</span><span class="nv">$OPENAI_API_KEY</span> aiops-pipeline:1.0
+</span></span></code></pre><button class="copy-code">copy</button></div><p>Không bắt buộc. Có Dockerfile + chạy được → notable trong demo.</p><hr><h2 id="11-embedded-exercise">11. Embedded Exercise<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#11-embedded-exercise">#</a></h2><p><strong>Task:</strong> Code <code>serve.py</code> + <code>DESIGN.md</code> cho lab.</p><blockquote><p><strong>Quy ước nộp bài:</strong></p><ul><li>Branch <code>main</code></li><li>Path: <code>aiops-&lt;tên&gt;/w2/d3/</code> (lowercase <code>w2</code> + <code>d3</code>)</li><li>File: <code>serve.py</code> + <code>DESIGN.md</code> (HOA) + <code>SUBMIT.md</code> (HOA)</li><li>Tên file chính xác như trên — không phải <code>app.py</code>, <code>architecture.md</code>, hoặc <code>adr_001.md</code>. Sai naming = 1 điểm.</li></ul></blockquote><h3 id="111-steps">11.1 Steps<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#111-steps">#</a></h3><ol><li>Tạo <code>aiops-&lt;your-name&gt;/w2/d3/</code></li><li>Build skeleton <code>serve.py</code> theo section 2-3</li><li>Add health/ready endpoints (section 6)</li><li>Add latency middleware (section 4.1)</li><li>Tích hợp với D1 correlate + D2 RCA (giả lập tạm — không cần chính xác, chỉ cần wire)</li><li>Write <code>DESIGN.md</code> ≥ 100 từ:<ul><li>Pipeline architecture trong endpoint</li><li>Latency budget breakdown</li><li>1 production concern (concurrency hoặc fault tolerance) — bạn handle thế nào</li><li>Trade-off: vì sao chọn FastAPI thay vì Flask/BentoML</li></ul></li><li>Write <code>SUBMIT.md</code> với reflection</li></ol><h3 id="112-acceptance">11.2 Acceptance<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#112-acceptance">#</a></h3><ul><li><code>serve.py</code> chạy với <code>uvicorn serve:app --port 8000</code></li><li><code>curl /healthz</code> trả <code>{"status":"ok"}</code></li><li><code>curl POST /incident</code> với valid input trả 200, body có <code>clusters</code>, <code>root_cause</code>, <code>recommended_actions</code></li><li>Invalid input → 422, không 500</li><li><code>DESIGN.md</code> ≥ 100 từ, có concrete decision (e.g. “chọn gap_sec=120s vì…”)</li></ul><hr><h2 id="12-eod-checkpoint">12. EOD Checkpoint<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#12-eod-checkpoint">#</a></h2><p>Trong <code>SUBMIT.md</code>:</p><ol><li><strong>Latency budget của endpoint bạn là bao nhiêu (p99)?</strong> Phase nào chiếm thời gian nhất?</li><li><strong>Endpoint của bạn xử lý 1 input với 5 alert vs 500 alert</strong> — sự khác biệt latency là gì? Linear scale? Hay có phần fixed cost?</li><li><strong>LLM provider down giữa demo.</strong> Hệ thống bạn behave thế nào? Phương án dự phòng?</li><li><strong><code>/healthz</code> và <code>/readyz</code> khác nhau gì?</strong> Khi nào dùng cái nào?</li><li><strong>Trainer POST 4 request đồng thời từ 4 nhóm khác nhau.</strong> Endpoint bạn handle ổn không? Bottleneck đầu tiên?</li></ol><blockquote><p>Câu 3 + 5 sẽ được hỏi lại trong vấn đáp Friday cho Layer 4 owner. Suy nghĩ sẵn.</p></blockquote><hr><h2 id="13-resources">13. Resources<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#13-resources">#</a></h2><ul><li><strong>FastAPI</strong>: <a href="https://fastapi.tiangolo.com/tutorial/">https://fastapi.tiangolo.com/tutorial/</a> — đọc 5 phần đầu là đủ cho lab</li><li><strong>Pydantic v2</strong>: <a href="https://docs.pydantic.dev/latest/concepts/models/">https://docs.pydantic.dev/latest/concepts/models/</a></li><li><strong>“Patterns of Distributed Systems”</strong> — Unmesh Joshi (Manning). Chapter về Health Check + Heartbeat.</li><li><strong>Prometheus client Python</strong>: <a href="https://github.com/prometheus/client_python">https://github.com/prometheus/client_python</a></li><li><strong><code>uvicorn</code> deployment best practices</strong>: <a href="https://www.uvicorn.org/deployment/">https://www.uvicorn.org/deployment/</a></li></ul><hr><h2 id="14-sang-friday">14. Sang Friday<a hidden="" class="anchor" aria-hidden="true" href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#14-sang-friday">#</a></h2><p>Bạn đã có đủ skill:</p><ul><li>D1: correlate alerts → clusters</li><li>D2: graph + LLM → root cause + action</li><li>D3: serve nó qua HTTP endpoint</li></ul><p>Friday lab kết hợp tất cả + thêm 1 thứ nhỏ — <strong>incident history retrieval</strong> cho LLM context. Code base bạn build trong 3 ngày sẽ được copy sang <code>aiops-group-{N}/w2/</code> và team-up theo role (Correlator / RCA / LLM / Platform).</p><p>Chuẩn bị tinh thần: trainer sẽ hỏi cá nhân về layer bạn owned. Đọc lại 3 SUBMIT.md tuần này — câu nào bạn viết chưa thoả → viết lại + suy nghĩ thêm.</p></div></article></main><footer class="footer"><span>© 2026 <a href="https://khanhnn00.github.io/learning-notes/">My Learning Notes</a></span> ·
+<span>Powered by
+<a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &amp;
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a></span></footer><a href="https://khanhnn00.github.io/learning-notes/xbrain/aiops-w2/w2-d3-model-serving/#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"></path></svg>
+</a><script>let menu=document.getElementById("menu");menu&&(menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>
