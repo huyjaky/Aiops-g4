@@ -1,5 +1,3 @@
-# BẢN THIẾT KẾ: API Phục vụ Sự cố AIOps (AIOps Incident Serving API)
-
 ## 1. Kiến trúc Pipeline trong Endpoint
 
 Endpoint phục vụ chính (`POST /incident`) triển khai một pipeline tuần tự gồm 3 lớp để xử lý hàng loạt cảnh báo (alerts):

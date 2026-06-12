@@ -1,5 +1,3 @@
-# BÀN GIAO: Báo cáo Thử nghiệm & Câu hỏi Thu hoạch EOD
-
 ## Câu hỏi 1: Latency budget của endpoint bạn là bao nhiêu (p99)? Phase nào chiếm thời gian nhất?
 
 ### Trả lời:
