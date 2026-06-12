@@ -1,0 +1,63 @@
+graph TB
+    %% Styling Classes for Architecture Types
+    classDef saas fill:#ffe5d9,stroke:#ff9f1c,stroke-width:2px,color:#000;
+    classDef oss fill:#d1e7dd,stroke:#198754,stroke-width:2px,color:#000;
+    classDef inhouse fill:#fff3cd,stroke:#d4a373,stroke-width:2px,color:#000;
+    classDef app fill:#e2e3e5,stroke:#41464b,stroke-width:1px,color:#000;
+
+    %% 1. Ingestion Layer
+    subgraph Ingestion_Layer ["Ingestion Layer - OSS and In-house"]
+        app-services["10 GeekShop Services and Backing Stores"]:::app
+        alloy["Grafana Alloy <br>OSS Unified Agent"]:::oss
+        cardinality-filter["OTel Cardinality Filter <br>In-house Custom Processor"]:::inhouse
+        tail-sampling["Tail-Based Sampling Engine <br>In-house Custom Rules"]:::inhouse
+        
+        app-services -->|Metrics, Logs, Traces| alloy
+        alloy --> cardinality-filter
+        alloy --> tail-sampling
+    end
+
+    %% 2. Storage & Retention Layer
+    subgraph Storage_Layer ["Storage and Retention Layer - Grafana Cloud - SaaS"]
+        mimir["Grafana Mimir <br>SaaS Metrics Store <br>30d Hot | 13m Cold in S3"]:::saas
+        loki["Grafana Loki <br>SaaS Logs Store <br>15d Hot | 90d Cold in S3"]:::saas
+        tempo["Grafana Tempo <br>SaaS Traces Store <br>14d Hot | 30d Cold in S3"]:::saas
+        
+        cardinality-filter -->|Filtered Metrics| mimir
+        alloy -->|Logs| loki
+        tail-sampling -->|Anomalies 100% | Trace Sample 0.1%| tempo
+    end
+
+    %% 3. Alerting & Incident Layer
+    subgraph Alerting_Layer ["Alerting and Incident Routing - Grafana Cloud - SaaS"]
+        alert-engine["Grafana Alerting <br>Central Rule Engine"]:::saas
+        oncall["Grafana OnCall <br>SaaS Incident Routing <br>Auto-grouping by Fingerprint"]:::saas
+        
+        mimir & loki -->|Evaluates Rules| alert-engine
+        alert-engine -->|Trigger Alert| oncall
+    end
+
+    %% 4. Human Interface Layer
+    subgraph Human_UI ["Human Interface - Unified Portal - SaaS"]
+        grafana-ui["Grafana Unified Console <br>Single Pane of Glass"]:::saas
+        oncall-engineer["On-Call Engineer <br>Opens 1 UI Only"]:::app
+        
+        grafana-ui -->|Explore and Query| mimir & loki & tempo
+        oncall-engineer -->|Triage and Action| grafana-ui
+        oncall -->|Page and Notify| oncall-engineer
+    end
+
+    %% 5. External & Public Communication
+    subgraph External_Comm ["External and Public Communication - OSS and SaaS"]
+        gsm["Grafana Synthetic Monitoring <br>SaaS Global Probes"]:::saas
+        status-page["Uptime Kuma <br>OSS Status Page"]:::oss
+        
+        gsm -->|Ping and HTTP Checks| app-services
+        gsm -->|Alerts on Failure| alert-engine
+        oncall -->|Webhook Update| status-page
+    end
+
+    %% Deep UI Correlations
+    grafana-ui -.->|Log to Trace Link| loki
+    grafana-ui -.->|Trace to Log Link| tempo
+    grafana-ui -.->|Exemplar Metric to Trace Link| mimir

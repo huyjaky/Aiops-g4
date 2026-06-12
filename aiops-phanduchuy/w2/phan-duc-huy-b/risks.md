@@ -1,0 +1,12 @@
+# A6. Risk Register
+
+Below are the six highest technical and financial risks identified for the GeekShop observability redesign project, along with concrete mitigations and clear ownership assignments.
+
+| No | Risk Description | Likelihood | Impact | Specific Mitigation | Owner |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | **Double-billing** during the 8-week parallel migration window when both legacy and Grafana stacks run. | **High** | **Medium** | Negotiate a 60-day migration credit with Grafana Labs. Ingest only 10% of nodes in the first 4 weeks to limit dual-ingestion costs before full cut-over. | **Platform Team Lead / FinOps** |
+| 2 | **Splunk auto-renewal contract trigger** is missed due to the 90-day cancellation window. | **Medium** | **High** | Submit a formal non-renewal notice to Splunk on Day 1 of the migration plan (sending it 7 months early ensures we do not trigger the 90-day auto-renew). | **IT Procurement Manager** |
+| 3 | **Metrics cardinality explosion** on Grafana Mimir due to developers introducing dynamic labels (like `customer_id`, `uuid`). | **High** | **High** | Implement a static compilation check (`alloy compile`) in CI/CD pipelines to block commits with dynamic metric labels. Enforce active series limits (max 5,000 per namespace) in Grafana Alloy. | **DevOps / CI-CD Lead** |
+| 4 | **Paging blackout or missed critical alerts** during transition from PagerDuty to Grafana OnCall. | **Low** | **High** | Run parallel on-call rotations for 2 weeks: alerts fire to both systems; keep PagerDuty active but silenced to audit coverage. Pre-stage a 1-click webhook redirect script to return to PagerDuty in < 5 minutes. | **On-Call Coordinator / Lead SRE** |
+| 5 | **Slower log query performance** on Grafana Loki when searching long-tail logs due to metadata-only indexing. | **Medium** | **Medium** | Enforce JSON structured logs across all services. Pre-configure Loki templates in Grafana with mandatory label filters (`service`, `env`, `level`) to restrict raw text S3 scans. | **Dev Tools Team** |
+| 6 | **Incident MTTR regression** due to developers and on-call responders lacking familiarity with LogQL/PromQL and Grafana Explore UIs. | **Medium** | **Medium** | Host two mandatory hands-on chaos drill workshops in Week 5. Create and pin a Datadog-to-PromQL query translation cheatsheet on the Grafana landing page. | **Developer Upskilling Lead** |
