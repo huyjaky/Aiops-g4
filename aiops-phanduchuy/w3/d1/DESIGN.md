@@ -5,7 +5,7 @@ Tài liệu này giải thích các quyết định thiết kế cho hệ thốn
 ---
 
 ### 1. SLI choice cho frontend
-Đối với frontend, tín hiệu RUM cung cấp 4 metric ứng viên bao gồm: page load time, DOM ready, JS error rate và network error rate. Chúng tôi quyết định chọn tiêu chuẩn đánh giá sự khả dụng (availability) dựa trên sự kết hợp: `dom_ready < 3000ms AND no js_error AND no network_error`.
+Đối với frontend, tín hiệu RUM cung cấp 4 metric ứng viên bao gồm: page load time, DOM ready, JS error rate và network error rate. Em quyết định chọn tiêu chuẩn đánh giá sự khả dụng (availability) dựa trên sự kết hợp: `dom_ready < 3000ms AND no js_error AND no network_error`.
 
 Lý do loại bỏ các phương án khác:
 - **Page load time:** Quá rộng, dễ bị nhiễu bởi các script quảng cáo hoặc theo dõi từ bên thứ ba mà không ảnh hưởng trực tiếp đến tương tác chính của người dùng.
@@ -16,7 +16,7 @@ Kết hợp 3 yếu tố giúp đo lường chính xác trải nghiệm thực t
 ---
 
 ### 2. SLO target cho api
-Chúng tôi đặt mục tiêu SLO khả dụng cho API là **99.9%** trong chu kỳ 30 ngày.
+Em đặt mục tiêu SLO khả dụng cho API là **99.9%** trong chu kỳ 30 ngày.
 
 Lý do lựa chọn:
 - Nếu đặt **99.0%** (2 số 9), hệ thống cho phép tới 432 phút downtime/tháng. Ngưỡng này quá lỏng lẻo, khiến on-call engineer không nhận được cảnh báo ngay cả khi API bị sập một khoảng thời gian dài, gây mất mát doanh thu nghiêm trọng.
@@ -26,7 +26,7 @@ Lý do lựa chọn:
 ---
 
 ### 3. Latency threshold p99
-Chúng tôi thiết lập ngưỡng cắt (cut-off) độ trễ của API ở mốc **500ms** để phân loại các yêu cầu bị coi là chậm (failure).
+Em thiết lập ngưỡng cắt (cut-off) độ trễ của API ở mốc **500ms** để phân loại các yêu cầu bị coi là chậm (failure).
 
 Dưới đây là bảng phân phối độ trễ (latency distribution) của API thu thập từ 2.073.780 request trong 3 ngày:
 - **p50 (Median):** 45 ms
@@ -41,7 +41,7 @@ Số liệu thực tế cho thấy ngay cả ở phân vị p99.9, độ trễ t
 ---
 
 ### 4. 4xx exclusion
-Chúng tôi loại trừ toàn bộ mã lỗi nhóm 4xx ra khỏi danh sách tính lỗi của SLI/SLO khả dụng API, ngoại trừ mã **429 (Too Many Requests)**.
+Em loại trừ toàn bộ mã lỗi nhóm 4xx ra khỏi danh sách tính lỗi của SLI/SLO khả dụng API, ngoại trừ mã **429 (Too Many Requests)**.
 
 Lý do:
 - Các mã lỗi như 400, 401, 403, 404 phản ánh lỗi xuất phát từ phía client (nhập sai URL, thiếu token, bad request). Hệ thống hoạt động hoàn toàn bình thường nhưng vẫn phải trả về các mã lỗi này theo chuẩn HTTP. Nếu tính cả 4xx vào SLO, bất kỳ cuộc tấn công dò quét cổng (port scanning) hoặc bot spam request nào cũng sẽ nhanh chóng đốt cháy Error Budget của hệ thống, dẫn đến cảnh báo giả gây mệt mỏi cho đội ngũ on-call (alert fatigue).
@@ -51,7 +51,7 @@ Lý do:
 ---
 
 ### 5. MWMBR tuning
-Chúng tôi sử dụng bộ tham số mặc định được Google SRE khuyến nghị:
+Em sử dụng bộ tham số mặc định được Google SRE khuyến nghị:
 - **Tier 1 (Urgent Page):** Long window 1h, Short window 5m, Threshold 14.4 (tiêu thụ 2% budget).
 - **Tier 2 (Page):** Long window 6h, Short window 30m, Threshold 6.0 (tiêu thụ 5% budget).
 - **Tier 3 (Ticket):** Long window 3d, Short window 6h, Threshold 1.0 (tiêu thụ 10% budget).
@@ -62,4 +62,4 @@ Kết quả từ `validation_report.json` khi chạy bộ tham số này đạt 
 - **Tỷ lệ bỏ sót sự cố (False Negative - FN) bằng 0**, phát hiện thành công cả 3 incident nghiêm trọng ảnh hưởng đến API.
 - **Độ trễ phát hiện sự cố (mttd_delta_s) là 60 giây**, nằm đúng trong giới hạn cho phép (<= 60s).
 
-Nếu ta tăng ngưỡng burn rate (ví dụ lên 20.0), mttd_delta_s sẽ bị kéo dài hoặc thậm chí dẫn đến bỏ sót sự cố nhỏ (FN > 0). Ngược lại, nếu giảm ngưỡng xuống để phát hiện nhanh hơn, số lượng cảnh báo giả sẽ tăng lên, làm giảm `noise_reduction_pct` xuống dưới mức 70%. Bộ cấu hình mặc định này đã tối ưu hoàn hảo cho tập dữ liệu của chúng ta.
+Nếu em tăng ngưỡng burn rate (ví dụ lên 20.0), mttd_delta_s sẽ bị kéo dài hoặc thậm chí dẫn đến bỏ sót sự cố nhỏ (FN > 0). Ngược lại, nếu giảm ngưỡng xuống để phát hiện nhanh hơn, số lượng cảnh báo giả sẽ tăng lên, làm giảm `noise_reduction_pct` xuống dưới mức 70%. Bộ cấu hình mặc định này đã tối ưu hoàn hảo cho tập dữ liệu.
