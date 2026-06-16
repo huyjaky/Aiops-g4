@@ -6,12 +6,12 @@
     "mttd": 1,
     "rca_service": "payment-svc",
     "rca_correct": true,
-    "observed_at_ts": 1781586219,
+    "observed_at_ts": 1781597301,
     "raw": {
       "alerts": [
         {
           "id": "alert-1",
-          "fire_ts": 1781586220,
+          "fire_ts": 1781597302,
           "service": "payment-svc",
           "metric": "latency",
           "severity": "critical",
@@ -35,12 +35,12 @@
     "mttd": 1,
     "rca_service": "payment-svc",
     "rca_correct": true,
-    "observed_at_ts": 1781586225,
+    "observed_at_ts": 1781597307,
     "raw": {
       "alerts": [
         {
           "id": "alert-2",
-          "fire_ts": 1781586226,
+          "fire_ts": 1781597308,
           "service": "payment-svc",
           "metric": "error_rate",
           "severity": "critical",
@@ -64,12 +64,12 @@
     "mttd": 1,
     "rca_service": "inventory-svc",
     "rca_correct": true,
-    "observed_at_ts": 1781586231,
+    "observed_at_ts": 1781597313,
     "raw": {
       "alerts": [
         {
           "id": "alert-3",
-          "fire_ts": 1781586232,
+          "fire_ts": 1781597314,
           "service": "inventory-svc",
           "metric": "availability",
           "severity": "critical",
@@ -93,12 +93,12 @@
     "mttd": 1,
     "rca_service": "api-gateway",
     "rca_correct": true,
-    "observed_at_ts": 1781586237,
+    "observed_at_ts": 1781597319,
     "raw": {
       "alerts": [
         {
           "id": "alert-4",
-          "fire_ts": 1781586238,
+          "fire_ts": 1781597320,
           "service": "api-gateway",
           "metric": "cpu_usage",
           "severity": "warning",
@@ -107,7 +107,7 @@
         },
         {
           "id": "alert-4-downstream",
-          "fire_ts": 1781586243,
+          "fire_ts": 1781597325,
           "service": "checkout-svc",
           "metric": "latency",
           "severity": "critical",
@@ -131,12 +131,12 @@
     "mttd": 1,
     "rca_service": "payment-svc",
     "rca_correct": false,
-    "observed_at_ts": 1781586243,
+    "observed_at_ts": 1781597325,
     "raw": {
       "alerts": [
         {
           "id": "alert-5",
-          "fire_ts": 1781586244,
+          "fire_ts": 1781597326,
           "service": "payment-db",
           "metric": "connection_pool_saturation",
           "severity": "critical",
@@ -160,12 +160,12 @@
     "mttd": 1,
     "rca_service": "auth-svc",
     "rca_correct": true,
-    "observed_at_ts": 1781586249,
+    "observed_at_ts": 1781597331,
     "raw": {
       "alerts": [
         {
           "id": "alert-6",
-          "fire_ts": 1781586250,
+          "fire_ts": 1781597332,
           "service": "auth-svc",
           "metric": "jwt_validation_failures",
           "severity": "critical",
@@ -189,7 +189,7 @@
     "mttd": null,
     "rca_service": "log-collector",
     "rca_correct": false,
-    "observed_at_ts": 1781586255,
+    "observed_at_ts": 1781597337,
     "raw": {
       "alerts": [],
       "rca": {
@@ -208,12 +208,12 @@
     "mttd": 1,
     "rca_service": "api-gateway",
     "rca_correct": true,
-    "observed_at_ts": 1781586261,
+    "observed_at_ts": 1781597343,
     "raw": {
       "alerts": [
         {
           "id": "alert-8",
-          "fire_ts": 1781586262,
+          "fire_ts": 1781597344,
           "service": "api-gateway",
           "metric": "all_downstream_timeout",
           "severity": "critical",
@@ -237,12 +237,12 @@
     "mttd": 1,
     "rca_service": "dns-resolver",
     "rca_correct": true,
-    "observed_at_ts": 1781586267,
+    "observed_at_ts": 1781597349,
     "raw": {
       "alerts": [
         {
           "id": "alert-9",
-          "fire_ts": 1781586268,
+          "fire_ts": 1781597350,
           "service": "dns-resolver",
           "metric": "lookup_latency_seconds",
           "severity": "critical",
@@ -266,12 +266,12 @@
     "mttd": 1,
     "rca_service": "payment-svc",
     "rca_correct": true,
-    "observed_at_ts": 1781586273,
+    "observed_at_ts": 1781597355,
     "raw": {
       "alerts": [
         {
           "id": "alert-10",
-          "fire_ts": 1781586274,
+          "fire_ts": 1781597356,
           "service": "checkout-svc",
           "metric": "http_500_rate",
           "severity": "critical",
@@ -280,7 +280,7 @@
         },
         {
           "id": "alert-10-retry",
-          "fire_ts": 1781586279,
+          "fire_ts": 1781597361,
           "service": "payment-svc",
           "metric": "request_count",
           "severity": "warning",
