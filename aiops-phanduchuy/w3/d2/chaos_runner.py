@@ -156,9 +156,11 @@ def print_scoreboard(results: list[dict]) -> None:
     
     print()
     print("Gaps identified:")
-    # Print hardcoded gaps based on simulation outcome
-    print("- 5: payment_db_memory: RCA picked payment-svc instead of payment-db -> Correlator picked downstream service instead of the database root cause.")
-    print("- 7: log_collector_disk: Anomaly in log ingestion lag not detected -> Detector baseline noise floor too high to catch slow log collector.")
+    for r in results:
+        if not r["detected"]:
+            print(f"- {r['id']}: {r['name']}: Anomaly not detected -> Detector baseline noise floor too high or signal missed.")
+        elif not r["rca_correct"]:
+            print(f"- {r['id']}: {r['name']}: RCA picked '{r['rca_service']}' instead of expected service -> Correlator grouped metrics too aggressively or picked downstream symptom carrier.")
 
 
 def run_one(exp: dict) -> dict:
