@@ -6,8 +6,14 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Shared state file path
-STATE_FILE = "/app/shared/state.json"
+STATE_FILE = os.getenv("STATE_FILE", "/app/shared/state.json")
 
 def get_state():
     if not os.path.exists(STATE_FILE):
@@ -212,12 +218,16 @@ def main():
     role = sys.argv[1]
     print(f"[Service Mock] Starting role: {role}")
     
+    pipeline_port = int(os.getenv("PIPELINE_PORT", "8000"))
+    checkout_port = int(os.getenv("CHECKOUT_PORT", "8080"))
+    prometheus_port = int(os.getenv("PROMETHEUS_PORT", "9090"))
+    
     if role == "pipeline":
-        uvicorn.run(pipeline_app, host="0.0.0.0", port=8000)
+        uvicorn.run(pipeline_app, host="0.0.0.0", port=pipeline_port)
     elif role == "checkout-svc":
-        uvicorn.run(checkout_app, host="0.0.0.0", port=8080)
+        uvicorn.run(checkout_app, host="0.0.0.0", port=checkout_port)
     elif role == "prometheus":
-        uvicorn.run(prometheus_app, host="0.0.0.0", port=9090)
+        uvicorn.run(prometheus_app, host="0.0.0.0", port=prometheus_port)
     else:
         # Idle microservices (frontend, api-gateway, payment-svc, inventory-svc, etc.)
         try:

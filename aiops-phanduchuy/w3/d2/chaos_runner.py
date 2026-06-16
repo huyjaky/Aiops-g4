@@ -13,11 +13,15 @@ import subprocess
 import time
 from pathlib import Path
 
+import os
 import yaml
 import requests
+from dotenv import load_dotenv
 
-PIPELINE_URL = "http://localhost:8000"
-COOLDOWN_SECONDS = 5  # Reduced for simulation speed, production standard is 120
+load_dotenv()
+
+PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8000")
+COOLDOWN_SECONDS = int(os.getenv("COOLDOWN_SECONDS", "5"))
 
 
 def load_experiments(path: Path) -> list[dict]:

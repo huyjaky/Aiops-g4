@@ -16,9 +16,14 @@ import statistics
 import time
 from datetime import datetime, timezone
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import requests
 
-PROM_URL = "http://localhost:9090"
+PROM_URL = os.getenv("PROM_URL", "http://localhost:9090")
 
 DEFAULT_QUERIES = [
     "rate(http_requests_total[1m])",

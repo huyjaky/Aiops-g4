@@ -2,10 +2,14 @@
 """query_pipeline.py — quick CLI to inspect AIOps pipeline endpoints."""
 import argparse
 import json
+import os
 import sys
 import requests
+from dotenv import load_dotenv
 
-PIPELINE_URL = "http://localhost:8000"
+load_dotenv()
+
+PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8000")
 
 
 def cmd_alerts(args) -> None:
