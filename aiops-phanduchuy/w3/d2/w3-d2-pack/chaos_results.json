@@ -1,0 +1,300 @@
+[
+  {
+    "id": 1,
+    "name": "payment_latency",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "payment-svc",
+    "rca_correct": true,
+    "observed_at_ts": 1781585422,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-1",
+          "fire_ts": 1781585423,
+          "service": "payment-svc",
+          "metric": "latency",
+          "severity": "critical",
+          "value": 550.0,
+          "threshold": 500.0
+        }
+      ],
+      "rca": {
+        "root_service": "payment-svc",
+        "confidence": 0.95,
+        "evidence": "Direct netem latency injected on payment-svc egress interface"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 2,
+    "name": "payment_network_loss",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "payment-svc",
+    "rca_correct": true,
+    "observed_at_ts": 1781585428,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-2",
+          "fire_ts": 1781585429,
+          "service": "payment-svc",
+          "metric": "error_rate",
+          "severity": "critical",
+          "value": 0.32,
+          "threshold": 0.05
+        }
+      ],
+      "rca": {
+        "root_service": "payment-svc",
+        "confidence": 0.92,
+        "evidence": "Egress packet loss (30%) on payment-svc interface"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 3,
+    "name": "inventory_availability",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "inventory-svc",
+    "rca_correct": true,
+    "observed_at_ts": 1781585434,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-3",
+          "fire_ts": 1781585435,
+          "service": "inventory-svc",
+          "metric": "availability",
+          "severity": "critical",
+          "value": 0.0,
+          "threshold": 0.99
+        }
+      ],
+      "rca": {
+        "root_service": "inventory-svc",
+        "confidence": 0.88,
+        "evidence": "Availability dropped to 0 due to inventory-svc pod delete"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 4,
+    "name": "api_gateway_cpu",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "api-gateway",
+    "rca_correct": true,
+    "observed_at_ts": 1781585440,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-4",
+          "fire_ts": 1781585441,
+          "service": "api-gateway",
+          "metric": "cpu_usage",
+          "severity": "warning",
+          "value": 0.92,
+          "threshold": 0.9
+        },
+        {
+          "id": "alert-4-downstream",
+          "fire_ts": 1781585446,
+          "service": "checkout-svc",
+          "metric": "latency",
+          "severity": "critical",
+          "value": 1200.0,
+          "threshold": 500.0
+        }
+      ],
+      "rca": {
+        "root_service": "api-gateway",
+        "confidence": 0.91,
+        "evidence": "api-gateway CPU spiked to 92%, causing downstream latency cascade"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 5,
+    "name": "payment_db_memory",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "payment-svc",
+    "rca_correct": false,
+    "observed_at_ts": 1781585446,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-5",
+          "fire_ts": 1781585447,
+          "service": "payment-db",
+          "metric": "connection_pool_saturation",
+          "severity": "critical",
+          "value": 0.98,
+          "threshold": 0.85
+        }
+      ],
+      "rca": {
+        "root_service": "payment-svc",
+        "confidence": 0.85,
+        "evidence": "DB connection pool saturated (98%) due to payment-db memory pressure but correlator attributed it to downstream dependency payment-svc"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 6,
+    "name": "auth_clock_skew",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "auth-svc",
+    "rca_correct": true,
+    "observed_at_ts": 1781585452,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-6",
+          "fire_ts": 1781585453,
+          "service": "auth-svc",
+          "metric": "jwt_validation_failures",
+          "severity": "critical",
+          "value": 15.0,
+          "threshold": 2.0
+        }
+      ],
+      "rca": {
+        "root_service": "auth-svc",
+        "confidence": 0.89,
+        "evidence": "JWT validation failures surged due to auth-svc clock skew (+60s)"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 7,
+    "name": "log_collector_disk",
+    "detected": false,
+    "mttd": null,
+    "rca_service": "log-collector",
+    "rca_correct": false,
+    "observed_at_ts": 1781585458,
+    "raw": {
+      "alerts": [],
+      "rca": {
+        "root_service": "log-collector",
+        "confidence": 0.78,
+        "evidence": "Log ingestion lag spiked because log-collector disk is 95% full"
+      },
+      "mttd_seconds": null,
+      "detected": false
+    }
+  },
+  {
+    "id": 8,
+    "name": "gateway_partition",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "api-gateway",
+    "rca_correct": true,
+    "observed_at_ts": 1781585464,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-8",
+          "fire_ts": 1781585465,
+          "service": "api-gateway",
+          "metric": "all_downstream_timeout",
+          "severity": "critical",
+          "value": 1.0,
+          "threshold": 0.5
+        }
+      ],
+      "rca": {
+        "root_service": "api-gateway",
+        "confidence": 0.87,
+        "evidence": "Network partition between frontend and api-gateway"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 9,
+    "name": "dns_slow_lookup",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "dns-resolver",
+    "rca_correct": true,
+    "observed_at_ts": 1781585470,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-9",
+          "fire_ts": 1781585471,
+          "service": "dns-resolver",
+          "metric": "lookup_latency_seconds",
+          "severity": "critical",
+          "value": 2.2,
+          "threshold": 0.5
+        }
+      ],
+      "rca": {
+        "root_service": "dns-resolver",
+        "confidence": 0.82,
+        "evidence": "Intermittent lookup failures matching dns-resolver latency spike"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  },
+  {
+    "id": 10,
+    "name": "checkout_retry_storm",
+    "detected": true,
+    "mttd": 1,
+    "rca_service": "payment-svc",
+    "rca_correct": true,
+    "observed_at_ts": 1781585476,
+    "raw": {
+      "alerts": [
+        {
+          "id": "alert-10",
+          "fire_ts": 1781585477,
+          "service": "checkout-svc",
+          "metric": "http_500_rate",
+          "severity": "critical",
+          "value": 0.2,
+          "threshold": 0.05
+        },
+        {
+          "id": "alert-10-retry",
+          "fire_ts": 1781585482,
+          "service": "payment-svc",
+          "metric": "request_count",
+          "severity": "warning",
+          "value": 250.0,
+          "threshold": 100.0
+        }
+      ],
+      "rca": {
+        "root_service": "payment-svc",
+        "confidence": 0.81,
+        "evidence": "Payment-svc overloaded by checkout retry storm"
+      },
+      "mttd_seconds": 1,
+      "detected": true
+    }
+  }
+]
