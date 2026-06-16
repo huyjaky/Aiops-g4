@@ -16,7 +16,7 @@ from pathlib import Path
 import yaml
 import requests
 
-PIPELINE_URL = "http://localhost:28000"
+PIPELINE_URL = "http://localhost:8000"
 COOLDOWN_SECONDS = 5  # Reduced for simulation speed, production standard is 120
 
 

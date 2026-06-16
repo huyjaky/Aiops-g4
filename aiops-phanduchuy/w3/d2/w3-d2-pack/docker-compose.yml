@@ -1,0 +1,148 @@
+version: '3.8'
+
+volumes:
+  shared-data:
+
+services:
+  # AIOps Pipeline
+  pipeline:
+    build: .
+    container_name: aiops-pipeline
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - shared-data:/app/shared
+    working_dir: /app
+    command: python3 service_mock.py pipeline
+
+  # Checkout Service
+  checkout-svc:
+    build: .
+    container_name: checkout-svc
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - shared-data:/app/shared
+    working_dir: /app
+    command: python3 service_mock.py checkout-svc
+
+  # Prometheus
+  prometheus:
+    build: .
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - .:/app
+      - shared-data:/app/shared
+    working_dir: /app
+    command: python3 service_mock.py prometheus
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+  # 10 Microservices (Idle Simulation)
+  frontend:
+    build: .
+    container_name: frontend
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py frontend
+
+  api-gateway:
+    build: .
+    container_name: api-gateway
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py api-gateway
+
+  payment-svc:
+    build: .
+    container_name: payment-svc
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py payment-svc
+
+  payment-db:
+    build: .
+    container_name: payment-db
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py payment-db
+
+  inventory-svc:
+    build: .
+    container_name: inventory-svc
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py inventory-svc
+
+  inventory-db:
+    build: .
+    container_name: inventory-db
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py inventory-db
+
+  notification-svc:
+    build: .
+    container_name: notification-svc
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py notification-svc
+
+  kafka:
+    build: .
+    container_name: kafka
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py kafka
+
+  auth-svc:
+    build: .
+    container_name: auth-svc
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py auth-svc
+
+  log-collector:
+    build: .
+    container_name: log-collector
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py log-collector
+
+  dns-resolver:
+    build: .
+    container_name: dns-resolver
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py dns-resolver
+
+  cache-svc:
+    build: .
+    container_name: cache-svc
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python3 service_mock.py cache-svc

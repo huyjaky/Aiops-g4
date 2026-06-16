@@ -5,7 +5,7 @@
 * **Stack commit hash**: `5c76f9d2ae2b322a61defb86`
 * **Pipeline version**: `aiops-pipeline-v1.2.0` (anomaly detection, temporal correlator & root cause engine)
 * **Pipeline commit hash**: `ab89de27124e8384b22a61de`
-* **Baseline window**: `2026-06-16T04:48:33.962154+00:00` → `2026-06-16T04:48:43.962154+00:00`
+* **Baseline window**: `2026-06-16T05:03:30.171267+00:00` → `2026-06-16T05:03:40.171267+00:00`
 * **Total experiments run**: 10
 
 ## 2. Results table

@@ -5,7 +5,7 @@ import json
 import sys
 import requests
 
-PIPELINE_URL = "http://localhost:28000"
+PIPELINE_URL = "http://localhost:8000"
 
 
 def cmd_alerts(args) -> None:
