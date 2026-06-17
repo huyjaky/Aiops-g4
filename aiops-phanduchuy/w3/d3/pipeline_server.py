@@ -1,7 +1,14 @@
+import os
 import subprocess
 import time
 from fastapi import FastAPI
 import uvicorn
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = FastAPI(title="Simulated AIOps Pipeline")
 
@@ -15,6 +22,11 @@ CONTAINERS = {
 state = {
     "stopped_ts": None
 }
+
+# Load pipeline hyperparameters from environment variables
+SIGMA = float(os.getenv("ANOMALY_THRESHOLD_SIGMA", "3.0"))
+CORR_WINDOW = int(os.getenv("CORRELATION_WINDOW_SECONDS", "120"))
+USE_LLM = os.getenv("AIOPS_USE_LLM", "true").lower() == "true"
 
 def is_container_running(name: str) -> bool:
     try:
@@ -50,12 +62,16 @@ def get_alerts(since: int = 0):
         state["stopped_ts"] = int(time.time())
         
     alerts = []
-    # If the containers are down, simulate alerts
+    # If the containers are down, simulate alerts using threshold settings
     for svc in stopped_services:
         alerts.append({
             "name": f"{svc}-down",
             "service": svc,
-            "fire_ts": state["stopped_ts"]
+            "fire_ts": state["stopped_ts"],
+            "meta": {
+                "sigma_threshold": SIGMA,
+                "correlation_window_sec": CORR_WINDOW
+            }
         })
         
     # Filter by since
@@ -72,14 +88,23 @@ def post_rca():
         return {
             "root_service": "none",
             "confidence": 1.0,
-            "evidence": "All systems operational."
+            "evidence": "All systems operational.",
+            "pipeline_mode": "LLM" if USE_LLM else "Graph-only"
         }
         
     return {
         "root_service": "unknown",
         "confidence": 0.33,
-        "evidence": "Simultaneous outage of billing, index, and placement. No sequential cascading pattern detected. Highly indicative of an operator-level typo or infrastructure provider outage."
+        "evidence": "Simultaneous outage of billing, index, and placement. No sequential cascading pattern detected. Highly indicative of an operator-level typo or infrastructure provider outage.",
+        "pipeline_mode": "LLM" if USE_LLM else "Graph-only"
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PIPELINE_PORT", "8000"))
+    print(f"--- Pipeline Server configuration loaded ---")
+    print(f"Port: {port}")
+    print(f"Anomaly threshold (Sigma): {SIGMA}")
+    print(f"Correlation window: {CORR_WINDOW}s")
+    print(f"Use LLM enrichment: {USE_LLM}")
+    print(f"--------------------------------------------")
+    uvicorn.run(app, host="0.0.0.0", port=port)

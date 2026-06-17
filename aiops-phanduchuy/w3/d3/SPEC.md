@@ -1,7 +1,16 @@
 # SPEC: HuyPD AIOps Mini-Platform
 
 ## 1. Platform overview
-The HuyPD AIOps Mini-Platform is an intelligent observability and operations platform designed to monitor a 10-service e-commerce microservice stack. The platform's scope includes automated ingestion of Prometheus metrics, real-time anomaly detection, temporal-topology alert correlation, and root cause analysis (RCA). Its non-scope includes automated self-healing and service restarts, remaining strictly an advisory tool for SREs and on-call engineers.
+The HuyPD AIOps Mini-Platform is an end-to-end intelligent observability and operations platform designed to monitor a 10-service e-commerce microservice stack. 
+
+### Data Layer Architecture (from W1)
+* **Collection:** OpenTelemetry (OTel) Collector gathers metrics (error rates, latencies) and system traces from the microservices.
+* **Transport:** Apache Kafka acts as a message broker buffer, protecting downstream components from backpressure during high traffic spikes.
+* **Processing:** Apache Flink handles stream processing and rolling aggregation of telemetry data in real-time.
+* **Storage:** VictoriaMetrics handles hot/warm time-series storage, and Elasticsearch stores log lines and raw traces.
+* **Query & ML:** Grafana serves as the visualization portal, and Python AI Services run machine learning detectors (3σ, Isolation Forest, etc.) to trigger anomalies.
+
+The platform's scope includes real-time anomaly detection, temporal-topology alert correlation, and root cause analysis (RCA). Its non-scope is automated self-healing and service restarts, remaining an advisory tool for SREs and on-call engineers.
 
 ## 2. SLO definition (from W3-D1)
 The platform monitors three core services with the following SLO configurations defined in `slo_spec.yaml`:
@@ -31,8 +40,9 @@ The platform monitors three core services with the following SLO configurations 
 - **Correlator:** Temporal-Topology correlator. It groups active alerts into logical incident clusters using a sliding window of 120 seconds and a maximum topology distance of 2 hops (BFS on service dependency graph).
 - **RCA:** Granger Causality temporal lag checking combined with Upstream Topology Bias. It references the service dependency graph to identify the earliest drifting node, outputting the root service name and confidence level.
 - **Decision Records:**
-  - *ADR-007:* Replaced count-based alert ranking with topology-aware temporal lag analysis (Granger Causality) to handle cascading retry storms.
-  - *ADR-008:* Integrated SSH audit logs (`auditd`) and Docker/Kubernetes container events into the correlation engine to detect operator-induced outages (resolving Gap 1 of the postmortem).
+  - *ADR-001 (W1-D3):* Integrated Apache Kafka as the transport layer between OTel Collector and VictoriaMetrics/Elasticsearch to prevent metric/log loss under high-load peaks (up to 50M events/sec).
+  - *ADR-007 (W2-D3):* Replaced count-based alert ranking with topology-aware temporal lag analysis (Granger Causality) to handle cascading retry storms.
+  - *ADR-008 (W3-D3):* Integrated SSH audit logs (`auditd`) and Docker/Kubernetes container events into the correlation engine to detect operator-induced outages (resolving Gap 1 of the postmortem).
 
 ## 4. Reliability validation (from W3-D2)
 - **Chaos run cadence:** Weekly automated execution of chaos experiments.
@@ -44,14 +54,14 @@ The platform monitors three core services with the following SLO configurations 
   3. *Sidecar & DNS Resolution Gaps:* DNS resolvers and clock skews on Auth sidecars had lower RCA confidence scores due to missing lateral dependency links in the static topology map.
 
 ## 5. Operational pattern (from W3-D3)
-- **Postmortem template:** [postmortem.md](file:///home/duckq1u/Documents/Aiops-g4/homeworks/aiops-phanduchuy/w3/d3/postmortem.md) (follows Google SRE blameless incident report format).
+- **Postmortem template:** [postmortem.md] (follows Google SRE blameless incident report format).
 - **On-call rotation:** Tier-based escalations. L1 on-call engineer is paged first on Tier 1/2 alerts. If not acknowledged within 15 minutes, the alert escalates to L2 SREs.
-- **ADR repository:** [ADR.md](file:///home/duckq1u/Documents/Aiops-g4/homeworks/aiops-phanduchuy/w3/d3/ADR.md) (Nygard format recording architectural trade-offs).
+- **ADR repository:** References [ADR.md] and [ADR-001.md].
 
 ## 6. Cost model (from W3-D3)
 - **Monthly cost:** $20,000 USD (Includes $1,000 for compute and storage, and $19,000 for 0.25 FTE SRE support at $12,500/month loaded loaded cost + on-call opportunities).
 - **Break-even avoided incidents/month:** 1.0 incidents avoided per month (assuming a downtime cost of $50,000/hour for a medium-large e-commerce platform and 40% MTTR reduction).
-- **Calculator implementation:** See [cost_model.py](file:///home/duckq1u/Documents/Aiops-g4/homeworks/aiops-phanduchuy/w3/d3/cost_model.py).
+- **Calculator implementation:** See [cost_model.py].
 
 ## 7. Open risks
 - **Risk 1 (High Severity):** Anomaly detector silence during slow disk capacity exhaustion on noisy I/O nodes. *Mitigation:* Transition to percentile-based (p99) disk write latency metrics and absolute disk space alerts.
