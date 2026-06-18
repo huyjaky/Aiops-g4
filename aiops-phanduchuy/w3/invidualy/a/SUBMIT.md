@@ -1,4 +1,12 @@
 # SUBMIT.md — Kết quả chạy 6 kịch bản closed-loop auto-remediation
+
+## Thông tin sinh viên
+- **Họ tên:** Phan Duc Huy
+- **Mã sinh viên:** XB-DN26-078
+- **Decision engine:** Rule-based (`runbook_map` trong `config.yaml`)
+- **Python version:** 3.13.5 (CPython)
+- **Công cụ chạy:** uv 0.4.x, Docker Compose v2.27
+
 ---
 
 ## 1. Scenario 1 — Action thành công (latency inject trên payment-svc)
