@@ -1,6 +1,12 @@
 import argparse
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load .env from script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(script_dir, ".env"))
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
@@ -14,8 +20,8 @@ from evidently.metric_preset import DataDriftPreset
 from evidently.report import Report
 
 FEATURES = ["latency_p99", "error_rate", "rps"]
-DEFAULT_THRESHOLD = 0.15
-DEFAULT_PERF_THRESHOLD = 0.70   # minimum acceptable precision on labeled holdout
+DEFAULT_THRESHOLD = float(os.getenv("DRIFT_THRESHOLD", 0.15))
+DEFAULT_PERF_THRESHOLD = float(os.getenv("PERF_THRESHOLD", 0.70))   # minimum acceptable precision on labeled holdout
 REPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "outputs", "drift_reports")
 
 

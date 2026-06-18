@@ -1,5 +1,10 @@
 import argparse
 import os
+from dotenv import load_dotenv
+
+# Load .env from script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(script_dir, ".env"))
 
 import mlflow
 import mlflow.sklearn
@@ -23,9 +28,9 @@ def load_features(csv_path: str) -> pd.DataFrame:
 
 def train(
     data_path: str,
-    contamination: float = 0.03,
-    n_estimators: int = 100,
-    random_state: int = 42,
+    contamination: float = float(os.getenv("MODEL_CONTAMINATION", 0.03)),
+    n_estimators: int = int(os.getenv("MODEL_N_ESTIMATORS", 100)),
+    random_state: int = int(os.getenv("MODEL_RANDOM_STATE", 42)),
 ) -> None:
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
     mlflow.set_tracking_uri(tracking_uri)
@@ -92,9 +97,9 @@ def train(
 def main():
     parser = argparse.ArgumentParser(description="Train anomaly detection model")
     parser.add_argument("--data", required=True, help="Path to training CSV")
-    parser.add_argument("--contamination", type=float, default=0.03)
-    parser.add_argument("--n-estimators", type=int, default=100)
-    parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--contamination", type=float, default=float(os.getenv("MODEL_CONTAMINATION", 0.03)))
+    parser.add_argument("--n-estimators", type=int, default=int(os.getenv("MODEL_N_ESTIMATORS", 100)))
+    parser.add_argument("--random-state", type=int, default=int(os.getenv("MODEL_RANDOM_STATE", 42)))
     args = parser.parse_args()
 
     train(

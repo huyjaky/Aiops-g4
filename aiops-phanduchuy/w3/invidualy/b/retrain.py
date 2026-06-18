@@ -1,6 +1,11 @@
 import argparse
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load .env from script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(script_dir, ".env"))
 
 import mlflow
 import mlflow.sklearn
@@ -18,8 +23,8 @@ MODEL_NAME = "anomaly-detector"
 EXPERIMENT_NAME = "anomaly-detection"
 FEATURES = ["latency_p99", "error_rate", "rps"]
 AUDIT_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "outputs", "audit_log.jsonl")
-POST_DEPLOY_CYCLES = 24          # simulate 24h post-deploy monitoring
-POST_DEPLOY_PREC_THRESHOLD = 0.65  # auto-rollback if v2 precision drops below this
+POST_DEPLOY_CYCLES = int(os.getenv("POST_DEPLOY_CYCLES", 24))          # simulate 24h post-deploy monitoring
+POST_DEPLOY_PREC_THRESHOLD = float(os.getenv("POST_DEPLOY_PREC_THRESHOLD", 0.65))  # auto-rollback if v2 precision drops below this
 
 
 def append_audit(event: str, detail: dict) -> None:
@@ -191,12 +196,12 @@ def main():
     parser = argparse.ArgumentParser(description="Drift-triggered retrain orchestrator")
     parser.add_argument("--reference", required=True, help="Baseline CSV (training reference)")
     parser.add_argument("--current", required=True, help="Current production window CSV")
-    parser.add_argument("--threshold", type=float, default=0.15, help="Drift score threshold")
-    parser.add_argument("--serve-url", default="http://localhost:8000", help="serve.py base URL")
+    parser.add_argument("--threshold", type=float, default=float(os.getenv("DRIFT_THRESHOLD", 0.15)), help="Drift score threshold")
+    parser.add_argument("--serve-url", default=f"http://localhost:{os.getenv('SERVE_PORT', '8001')}", help="serve.py base URL")
     parser.add_argument("--auto-approve", action="store_true", default=False,
                         help="Skip human approval gate (use only for automated testing)")
-    parser.add_argument("--contamination", type=float, default=0.03)
-    parser.add_argument("--n-estimators", type=int, default=100)
+    parser.add_argument("--contamination", type=float, default=float(os.getenv("MODEL_CONTAMINATION", 0.03)))
+    parser.add_argument("--n-estimators", type=int, default=int(os.getenv("MODEL_N_ESTIMATORS", 100)))
     parser.add_argument("--holdout", default=None,
                         help="Holdout CSV (old pattern, with anomaly_label) to validate v2 does not overfit")
     parser.add_argument("--post-deploy-eval", default=None,

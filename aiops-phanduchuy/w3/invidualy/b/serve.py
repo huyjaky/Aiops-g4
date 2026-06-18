@@ -3,6 +3,11 @@ import os
 import time
 from contextlib import asynccontextmanager
 from typing import Any
+from dotenv import load_dotenv
+
+# Load .env from script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(script_dir, ".env"))
 
 import mlflow
 import mlflow.sklearn
@@ -139,7 +144,7 @@ def reload():
 def main():
     parser = argparse.ArgumentParser(description="Run anomaly detector API")
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--port", type=int, default=int(os.getenv("SERVE_PORT", 8001)))
     parser.add_argument("--reload-on-start", action="store_true", default=False)
     args = parser.parse_args()
 
