@@ -35,6 +35,9 @@ _state: dict[str, Any] = {
     "model": None,
     "version": None,
     "model_uri": None,
+    "shadow_model": None,
+    "shadow_version": None,
+    "shadow_model_uri": None,
 }
 
 
@@ -55,12 +58,27 @@ def _load_model() -> None:
     except (ValueError, TypeError):
         pass
 
+    # Load shadow model (staging) if available
+    try:
+        shadow_mv = client.get_model_version_by_alias(MODEL_NAME, "staging")
+        shadow_model = mlflow.sklearn.load_model(f"models:/{MODEL_NAME}@staging")
+        _state["shadow_model"] = shadow_model
+        _state["shadow_version"] = shadow_mv.version
+        _state["shadow_model_uri"] = f"models:/{MODEL_NAME}@staging"
+        print(f"[serve] Loaded shadow model {MODEL_NAME} v{shadow_mv.version} from alias 'staging'")
+    except Exception as exc:
+        _state["shadow_model"] = None
+        _state["shadow_version"] = None
+        _state["shadow_model_uri"] = None
+        print(f"[serve] Shadow model (staging) not loaded: {exc}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _load_model()
     yield
     _state["model"] = None
+    _state["shadow_model"] = None
 
 
 app = FastAPI(title="Anomaly Detector API", lifespan=lifespan)
@@ -115,6 +133,31 @@ def predict(req: PredictRequest):
         predictions=predictions,
         scores=scores,
         version=str(_state["version"]),
+        model_name=MODEL_NAME,
+    )
+
+
+@app.post("/predict-shadow", response_model=PredictResponse)
+def predict_shadow(req: PredictRequest):
+    if _state["shadow_model"] is None:
+        raise HTTPException(status_code=503, detail="Shadow model (staging) not loaded")
+    if not req.features:
+        raise HTTPException(status_code=422, detail="features must not be empty")
+
+    X = np.array(req.features)
+    if X.shape[1] != len(FEATURES):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Expected {len(FEATURES)} features per row ({FEATURES}), got {X.shape[1]}",
+        )
+
+    predictions = _state["shadow_model"].predict(X).tolist()
+    scores = _state["shadow_model"].score_samples(X).tolist()
+
+    return PredictResponse(
+        predictions=predictions,
+        scores=scores,
+        version=str(_state["shadow_version"]),
         model_name=MODEL_NAME,
     )
 
